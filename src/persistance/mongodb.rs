@@ -2,8 +2,7 @@ use anyhow::{Ok, Result};
 use futures::stream::TryStreamExt;
 use mongodb::{bson::doc, options::FindOptions};
 use mongodb::{options::ClientOptions, Client};
-
-use crate::model::Message;
+use snitch::notifiers::Message;
 
 pub struct DatabaseService {
     pub client: Client,
@@ -45,16 +44,13 @@ impl DatabaseService {
 
 #[tokio::test]
 async fn my_test() {
+    use snitch::test_utils::get_test_message;
+
     let db_service = DatabaseService::new("mongodb://root:kdjie234!@localhost:27017")
         .await
         .unwrap();
 
-    let message = Message {
-        title: "To Kill a Mockingbird".to_string(),
-        hostname: "examplehost".to_string(),
-        content: "Harper Lee".to_string(),
-        timestamp: "now".to_string(),
-    };
+    let message = get_test_message();
     let hostname = "Mariuss-MacBook-Air.local".to_owned();
     db_service.add_message(message).await;
     let messages = db_service.find_messages(hostname).await.unwrap();

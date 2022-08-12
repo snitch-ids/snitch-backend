@@ -2,10 +2,10 @@
 mod api;
 mod errors;
 mod intentory;
-mod model;
 mod persistance;
 use crate::persistance::mongodb::DatabaseService;
 use actix_cors::Cors;
+use actix_web::{http, web, App, HttpServer, Responder};
 use api::{
     messages::{add_message, get_messages_by_hostname},
     users::{add_user, delete_user, get_users},
@@ -14,10 +14,9 @@ use api::{
 use persistance::users::Users;
 use tokio::sync::Mutex;
 
-use actix_web::{http, web, App, HttpServer, Responder};
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env_logger::init();
     let db_service = DatabaseService::new("mongodb://root:kdjie234!@localhost:27017")
         .await
         .expect("failed to create monogdb service");

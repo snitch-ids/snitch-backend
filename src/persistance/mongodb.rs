@@ -1,34 +1,39 @@
+use crate::model::MessageBackend;
 use anyhow::{Ok, Result};
-use futures::stream::TryStreamExt;
+use async_trait::async_trait;
+use futures::TryStreamExt;
 use mongodb::{bson::doc, options::FindOptions};
 use mongodb::{options::ClientOptions, Client};
-use snitch::notifiers::Message;
 
-pub struct DatabaseService {
+use crate::persistance::Persist;
+
+pub struct MongoDatabaseService {
     pub client: Client,
 }
 
-impl DatabaseService {
+impl MongoDatabaseService {
     pub async fn new(url: &str) -> Result<Self> {
-        // Parse a connection string into an options struct.
         let mut client_options = ClientOptions::parse(url).await?;
 
         client_options.app_name = Some("Snitch".to_string());
         let client = Client::with_options(client_options)?;
 
-        Ok(DatabaseService { client })
+        Ok(MongoDatabaseService { client })
     }
+}
 
-    pub async fn add_message(&self, message: Message) -> Result<()> {
+#[async_trait]
+impl Persist for MongoDatabaseService {
+    async fn add_message(&mut self, message: MessageBackend) -> Result<()> {
         let db = self.client.database("snitch");
-        let typed_collection = db.collection::<Message>("messages");
+        let typed_collection = db.collection::<MessageBackend>("messages");
         typed_collection.insert_one(message, None).await?;
         Ok(())
     }
 
-    pub async fn find_messages(&self, hostname: String) -> Result<Vec<Message>> {
+    async fn find_messages(&mut self, hostname: String) -> Result<Vec<MessageBackend>> {
         let db = self.client.database("snitch");
-        let typed_collection = db.collection::<Message>("messages");
+        let typed_collection = db.collection::<MessageBackend>("messages");
         let filter = doc! { "hostname": hostname };
         let find_options = FindOptions::builder().sort(doc! { "timestamp": 1 }).build();
         let mut cursor = typed_collection.find(filter, find_options).await?;
@@ -46,13 +51,13 @@ impl DatabaseService {
 async fn my_test() {
     use snitch::test_utils::get_test_message;
 
-    let db_service = DatabaseService::new("mongodb://root:kdjie234!@localhost:27017")
+    let mut db_service = MongoDatabaseService::new("mongodb://root:kdjie234!@localhost:27017")
         .await
         .unwrap();
 
     let message = get_test_message();
     let hostname = "Mariuss-MacBook-Air.local".to_owned();
-    db_service.add_message(message).await;
+    db_service.add_message(message.into()).await;
     let messages = db_service.find_messages(hostname).await.unwrap();
     println!("found messages: {:?}", messages);
 }

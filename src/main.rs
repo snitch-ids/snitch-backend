@@ -2,24 +2,29 @@
 mod api;
 mod errors;
 mod intentory;
+mod model;
 mod persistance;
-use crate::persistance::mongodb::DatabaseService;
+use crate::persistance::mongodb::MongoDatabaseService;
 use actix_cors::Cors;
-use actix_web::{http, web, App, HttpServer, Responder};
+use actix_web::{http, web, App, HttpServer};
 use api::{
     messages::{add_message, get_messages_by_hostname},
     users::{add_user, delete_user, get_users},
     AppStateWithCounter,
 };
-use persistance::users::Users;
+use persistance::{users::Users, redis::RedisDatabaseService};
 use tokio::sync::Mutex;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
-    let db_service = DatabaseService::new("mongodb://root:kdjie234!@localhost:27017")
+    // let db_service = MongoDatabaseService::new("mongodb://root:kdjie234!@localhost:27017")
+    //     .await
+    //     .expect("failed to create monogdb service");
+
+    let mut db_service = RedisDatabaseService::new("redis://127.0.0.1:6379")
         .await
-        .expect("failed to create monogdb service");
+        .expect("failed to create redis service");
 
     let state = web::Data::new(AppStateWithCounter {
         users: Mutex::new(Users { users: vec![] }),

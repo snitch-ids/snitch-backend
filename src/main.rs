@@ -4,7 +4,7 @@ mod errors;
 mod intentory;
 mod model;
 mod persistance;
-use crate::persistance::mongodb::MongoDatabaseService;
+
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
 use api::{
@@ -12,7 +12,7 @@ use api::{
     users::{add_user, delete_user, get_users},
     AppStateWithCounter,
 };
-use persistance::{users::Users, redis::RedisDatabaseService};
+use persistance::{redis::RedisDatabaseService, users::Users};
 use tokio::sync::Mutex;
 
 #[actix_web::main]
@@ -22,7 +22,7 @@ async fn main() -> std::io::Result<()> {
     //     .await
     //     .expect("failed to create monogdb service");
 
-    let mut db_service = RedisDatabaseService::new("redis://127.0.0.1:6379")
+    let db_service = RedisDatabaseService::new("redis://127.0.0.1:6379")
         .await
         .expect("failed to create redis service");
 
@@ -31,6 +31,7 @@ async fn main() -> std::io::Result<()> {
         messages: Mutex::new(db_service),
     });
 
+    println!("starting server...");
     HttpServer::new(move || {
         let cors = Cors::default()
             .allowed_origin("http://localhost:8080")

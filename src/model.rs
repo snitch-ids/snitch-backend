@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use redis::{from_redis_value, FromRedisValue, RedisResult, RedisWrite, ToRedisArgs, Value};
+use redis::{RedisWrite, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snitch::notifiers::Message;
 

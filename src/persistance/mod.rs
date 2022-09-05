@@ -9,7 +9,7 @@ use crate::model::MessageBackend;
 
 #[async_trait]
 pub trait Persist {
-    async fn add_message(&mut self, message: MessageBackend) -> Result<()>;
+    async fn add_message(&mut self, message: &MessageBackend) -> Result<()>;
 
-    async fn find_messages(&mut self, hostname: String) -> Result<Vec<MessageBackend>>;
+    async fn find_messages(&mut self, hostname: &str) -> Result<Vec<MessageBackend>>;
 }

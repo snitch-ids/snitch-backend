@@ -1,10 +1,10 @@
-use std::os::unix::prelude::PermissionsExt;
 
-use crate::{api::AppStateWithCounter, persistance::Persist};
+
+use crate::{api::AppStateWithCounter};
 use actix_web::{delete, get, post, web, Responder};
 
 #[get("/users/{name}")]
-async fn get_user_by_id  (
+async fn get_user_by_id(
     name: web::Path<String>,
     state: web::Data<AppStateWithCounter>,
 ) -> impl Responder {

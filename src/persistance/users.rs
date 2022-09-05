@@ -9,7 +9,7 @@ pub struct Users {
 
 impl Users {
     pub fn user_exists(&self, user: &String) -> bool {
-        self.users.contains(&user)
+        self.users.contains(user)
     }
 
     pub fn add_user(&mut self, user: String) -> Result<String> {

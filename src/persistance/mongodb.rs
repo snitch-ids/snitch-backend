@@ -24,14 +24,14 @@ impl MongoDatabaseService {
 
 #[async_trait]
 impl Persist for MongoDatabaseService {
-    async fn add_message(&mut self, message: MessageBackend) -> Result<()> {
+    async fn add_message(&mut self, message: &MessageBackend) -> Result<()> {
         let db = self.client.database("snitch");
         let typed_collection = db.collection::<MessageBackend>("messages");
         typed_collection.insert_one(message, None).await?;
         Ok(())
     }
 
-    async fn find_messages(&mut self, hostname: String) -> Result<Vec<MessageBackend>> {
+    async fn find_messages(&mut self, hostname: &str) -> Result<Vec<MessageBackend>> {
         let db = self.client.database("snitch");
         let typed_collection = db.collection::<MessageBackend>("messages");
         let filter = doc! { "hostname": hostname };
@@ -55,9 +55,9 @@ async fn my_test() {
         .await
         .unwrap();
 
-    let message = get_test_message();
-    let hostname = "Mariuss-MacBook-Air.local".to_owned();
-    db_service.add_message(message.into()).await;
+    let message: MessageBackend = get_test_message().into();
+    let hostname = "Mariuss-MacBook-Air.local";
+    db_service.add_message(&message).await;
     let messages = db_service.find_messages(hostname).await.unwrap();
     println!("found messages: {:?}", messages);
 }

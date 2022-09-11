@@ -1,3 +1,4 @@
+use super::user::User;
 use crate::model::MessageBackend;
 use crate::persistance::Persist;
 use anyhow::{Ok, Result};
@@ -40,6 +41,24 @@ impl Persist for RedisDatabaseService {
             .map(|response| serde_json::from_str(response).unwrap())
             .collect();
         Ok(messages)
+    }
+
+    async fn add_user(&mut self, user: &User) -> Result<()> {
+        info!("storing in database: {:?}", user);
+        let key = format!("users:{}", user.id);
+        let _: () = self.connection.rpush(key, user).await.unwrap();
+        info!("storing in database: {:?}... finished", user);
+        Ok(())
+    }
+
+    async fn get_users(&mut self) -> Result<Vec<User>> {
+        let users = self.connection.keys("users:*").await;
+        Ok(users.expect("failed retrieving users"))
+    }
+
+    async fn get_user_by_email(&mut self, email: &str) -> Result<User> {
+        let user = self.connection.keys("users:").await;
+        Ok(user.expect("failed retrieving users"))
     }
 }
 

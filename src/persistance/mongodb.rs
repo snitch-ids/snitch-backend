@@ -7,6 +7,8 @@ use mongodb::{options::ClientOptions, Client};
 
 use crate::persistance::Persist;
 
+use super::user::User;
+
 pub struct MongoDatabaseService {
     pub client: Client,
 }
@@ -44,6 +46,19 @@ impl Persist for MongoDatabaseService {
             results.push(message);
         }
         Ok(results)
+    }
+
+    async fn add_user(&mut self, user: &User) -> Result<()> {
+        todo!();
+        Ok(())
+    }
+
+    async fn get_users(&mut self) -> Result<Vec<User>> {
+        todo!();
+    }
+
+    async fn get_user_by_email(&mut self, email: &str) -> Result<User> {
+        todo!();
     }
 }
 

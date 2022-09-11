@@ -1,45 +1,44 @@
-
-
-use crate::{api::AppStateWithCounter};
+use crate::{
+    api::{authentication::LoginRequest, AppStateWithCounter},
+    authentication_service,
+    persistance::{
+        user::{self, User},
+        Persist,
+    },
+};
 use actix_web::{delete, get, post, web, Responder};
-
-#[get("/users/{name}")]
-async fn get_user_by_id(
-    name: web::Path<String>,
-    state: web::Data<AppStateWithCounter>,
-) -> impl Responder {
-    let users = state.users.lock().await;
-    let added_user = users
-        .get_user_by_id(name.to_owned())
-        .expect("failed getting user");
-    format!("gotten user {added_user}")
-}
+use anyhow::Result;
 
 #[get("/users/")]
 async fn get_users(state: web::Data<AppStateWithCounter>) -> impl Responder {
-    let users = state.users.lock().await;
-    let added_user = users.get_users().expect("failed getting user");
-    format!("gotten user {:?}", added_user)
+    let mut state = state.messages.lock().await;
+    let users = state.get_users().await.unwrap();
+    let payload = serde_json::to_string(&users).unwrap();
+    println!("send {:?}", payload);
+    payload
 }
 
-#[post("/users/{name}")]
-async fn add_user(
-    name: web::Path<String>,
-    state: web::Data<AppStateWithCounter>,
-) -> impl Responder {
-    let mut users = state.users.lock().await;
-    let added_user = users.add_user(name.to_owned()).expect("failed adding user");
-    format!("added user {added_user}")
+#[post("/users/")]
+async fn add_user(user: web::Json<User>, state: web::Data<AppStateWithCounter>) -> impl Responder {
+    let mut state = state.messages.lock().await;
+    let added_user = state.add_user(&user).await.expect("failed adding user");
+    format!("added user {:?}", added_user)
 }
 
-#[delete("/users/{name}")]
-async fn delete_user(
-    name: web::Path<String>,
+pub fn asdf(email: String) -> Result<User> {
+    Ok(User::default())
+}
+
+#[post("/users/authenticate")]
+async fn authenticate_user(
+    login_request: web::Json<LoginRequest>,
     state: web::Data<AppStateWithCounter>,
 ) -> impl Responder {
-    let mut users = state.users.lock().await;
-    let deleted_user = users
-        .delete_user(name.to_owned())
-        .expect("failed deleting user");
-    format!("deleted user {deleted_user}")
+    let mut state = state.messages.lock().await;
+    let user = state
+        .get_user_by_email(&login_request.email)
+        .await
+        .expect("failed getting user by email");
+    authentication_service::authenticate_user(&user, &login_request);
+    format!("authenticated")
 }

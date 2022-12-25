@@ -11,6 +11,7 @@ type Result<T> = std::result::Result<T, SnitchError>;
 pub struct User {
     id: i64,
     name: String,
+    password: String,
 }
 
 impl Display for User {

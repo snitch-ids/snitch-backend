@@ -7,8 +7,8 @@ cd docker
 docker-compose up
 ```
 
-## run the backend
+## run the backend (debug)
 
 ```shell
-cargo run
+RUST_LOG=DEBUG cargo run
 ```

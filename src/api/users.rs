@@ -1,9 +1,10 @@
 use crate::persistance::users::User;
 use crate::{api::AppStateWithCounter};
 use actix_web::{delete, get, post, web, Responder};
+use log::info;
 
-#[get("/users/{user_id}")]
-async fn get_user_by_id(
+#[get("/user/{user_id}")]
+pub async fn get_user_by_id(
     user_id: web::Path<i64>,
     state: web::Data<AppStateWithCounter>,
 ) -> impl Responder {
@@ -14,18 +15,19 @@ async fn get_user_by_id(
     format!("gotten user {added_user}")
 }
 
-#[get("/users/")]
+#[get("/user/")]
 pub(crate) async fn get_users(state: web::Data<AppStateWithCounter>) -> impl Responder {
     let users = state.users.lock().await;
     let added_user = users.get_users().expect("failed getting user");
     format!("gotten user {added_user:?}")
 }
 
-#[post("/users/")]
+#[post("/user/")]
 pub(crate) async fn add_user(
     state: web::Data<AppStateWithCounter>,
     user: web::Json<User>,
 ) -> impl Responder {
+    info!("add user");
     let mut users = state.users.lock().await;
     let added_user = users
         .add_user(user.into_inner())
@@ -33,7 +35,7 @@ pub(crate) async fn add_user(
     format!("added user {added_user}")
 }
 
-#[delete("/users/{user_id}")]
+#[delete("/user/{user_id}")]
 pub(crate) async fn delete_user(
     user_id: web::Path<i64>,
     state: web::Data<AppStateWithCounter>,

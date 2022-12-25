@@ -15,7 +15,7 @@ pub struct User {
 
 impl Display for User {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "id={} | name={}", self.id, self.name)
+        write!(f, "id={} | name={}\n", self.id, self.name)
     }
 }
 

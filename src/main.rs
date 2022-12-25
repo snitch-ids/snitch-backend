@@ -14,6 +14,7 @@ use api::{
 };
 use persistance::{redis::RedisDatabaseService, users::Users};
 use tokio::sync::Mutex;
+use crate::api::users::get_user_by_id;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -31,10 +32,11 @@ async fn main() -> std::io::Result<()> {
         messages: Mutex::new(db_service),
     });
 
-    println!("starting server...");
+    let port = 8080;
+    println!("starting server on port {}", port);
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:8080")
+            .allowed_origin(&*format!("http://127.0.0.1:{}", port))
             .allowed_origin_fn(|origin, _req_head| origin.as_bytes().ends_with(b".rust-lang.org"))
             .allowed_methods(vec!["GET", "POST"])
             .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
@@ -45,13 +47,14 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .service(welcome)
             .service(add_user)
+            .service(get_user_by_id)
             .service(get_users)
             .service(delete_user)
             .service(add_message)
             .service(get_messages_by_hostname)
             .app_data(state.clone())
     })
-    .bind(("127.0.0.1", 8082))?
+    .bind(("127.0.0.1", port))?
     .run()
     .await
 }

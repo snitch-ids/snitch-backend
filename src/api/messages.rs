@@ -7,7 +7,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 #[derive(Debug, Deserialize)]
-struct MessageRequest {
+pub struct MessageRequest {
     hostname: String,
 }
 
@@ -17,7 +17,7 @@ struct MessageResponse {
 }
 
 #[post("/messages/")]
-async fn add_message(
+pub(crate) async fn add_message(
     message: web::Json<MessageBackend>,
     state: web::Data<AppStateWithCounter>,
 ) -> impl Responder {
@@ -32,7 +32,7 @@ async fn add_message(
 }
 
 #[get("/messages/")]
-async fn get_messages_by_hostname(
+pub(crate) async fn get_messages_by_hostname(
     info: web::Query<MessageRequest>,
     state: web::Data<AppStateWithCounter>,
 ) -> impl Responder {

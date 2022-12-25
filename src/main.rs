@@ -10,7 +10,7 @@ use actix_web::{http, web, App, HttpServer};
 use api::{
     messages::{add_message, get_messages_by_hostname},
     users::{add_user, delete_user, get_users},
-    AppStateWithCounter,
+    welcome, AppStateWithCounter,
 };
 use persistance::{redis::RedisDatabaseService, users::Users};
 use tokio::sync::Mutex;
@@ -27,7 +27,7 @@ async fn main() -> std::io::Result<()> {
         .expect("failed to create redis service");
 
     let state = web::Data::new(AppStateWithCounter {
-        users: Mutex::new(Users { users: vec![] }),
+        users: Mutex::new(Users::example()),
         messages: Mutex::new(db_service),
     });
 
@@ -43,6 +43,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
+            .service(welcome)
             .service(add_user)
             .service(get_users)
             .service(delete_user)

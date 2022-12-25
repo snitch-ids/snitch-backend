@@ -53,8 +53,8 @@ async fn redis_test() {
     println!("START!");
     let message: MessageBackend = get_test_message().into();
     let hostname = message.hostname.as_ref();
-    println!("test message {:?}", message);
+    println!("test message {message:?}");
     db_service.add_message(&message).await.unwrap();
     let messages = db_service.find_messages(hostname).await.unwrap();
-    println!("found messages: {:?}", messages);
+    println!("found messages: {messages:?}");
 }

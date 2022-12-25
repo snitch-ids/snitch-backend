@@ -1,5 +1,5 @@
 use crate::persistance::users::User;
-use crate::{api::AppStateWithCounter, Users};
+use crate::{api::AppStateWithCounter};
 use actix_web::{delete, get, post, web, Responder};
 
 #[get("/users/{user_id}")]
@@ -18,7 +18,7 @@ async fn get_user_by_id(
 pub(crate) async fn get_users(state: web::Data<AppStateWithCounter>) -> impl Responder {
     let users = state.users.lock().await;
     let added_user = users.get_users().expect("failed getting user");
-    format!("gotten user {:?}", added_user)
+    format!("gotten user {added_user:?}")
 }
 
 #[post("/users/")]

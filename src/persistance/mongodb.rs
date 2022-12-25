@@ -59,5 +59,5 @@ async fn my_test() {
     let hostname = "Mariuss-MacBook-Air.local";
     db_service.add_message(&message).await;
     let messages = db_service.find_messages(hostname).await.unwrap();
-    println!("found messages: {:?}", messages);
+    println!("found messages: {messages:?}");
 }

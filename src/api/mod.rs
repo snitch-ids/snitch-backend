@@ -1,7 +1,7 @@
 pub mod messages;
 pub mod users;
 
-use actix_web::{get, web, Responder};
+use actix_web::{get, Responder};
 use tokio::sync::Mutex;
 
 use crate::persistance::{redis::RedisDatabaseService, users::Users};
@@ -13,5 +13,5 @@ pub struct AppStateWithCounter {
 
 #[get("/")]
 pub(crate) async fn welcome() -> impl Responder {
-    format!("welcome")
+    "welcome".to_string()
 }

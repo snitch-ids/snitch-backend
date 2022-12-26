@@ -1,22 +1,22 @@
 use crate::errors::SnitchError;
 
-
+use actix_jwt_auth_middleware::{
+    AuthResult, AuthenticationService, Authority, CookieSigner, FromRequest,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Error, Formatter};
 
-type Result<T> = std::result::Result<T, SnitchError>;
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, FromRequest)]
 pub struct User {
-    id: i64,
-    name: String,
-    password: String,
+    pub(crate) id: i64,
+    pub(crate) name: String,
+    pub(crate) password: String,
 }
 
 impl Display for User {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "id={} | name={}\n", self.id, self.name)
+        writeln!(f, "id={} | name={}", self.id, self.name)
     }
 }
 
@@ -25,26 +25,26 @@ pub struct Users {
 }
 
 impl Users {
-    pub fn add_user(&mut self, user: User) -> Result<User> {
+    pub fn add_user(&mut self, user: User) -> Result<User, Box<dyn std::error::Error>> {
         self.users.insert(user.id, user.clone());
         Ok(user)
     }
 
-    pub fn delete_user(&mut self, user_id: i64) -> Result<User> {
+    pub fn delete_user(&mut self, user_id: i64) -> Result<User, Box<dyn std::error::Error>> {
         let user = self.users.remove(&user_id).expect("failed deleting user");
         Ok(user)
     }
 
-    pub fn get_users(&self) -> Result<Vec<User>> {
+    pub fn get_users(&self) -> Result<Vec<User>, Box<dyn std::error::Error>> {
         let users = self.users.values().cloned().collect();
         Ok(users)
     }
 
-    pub fn get_user_by_id(&self, user_id: i64) -> Result<User> {
+    pub fn get_user_by_id(&self, user_id: i64) -> Result<User, Box<dyn std::error::Error>> {
         let user = self.users.get(&user_id);
         let user = match user {
             Some(user) => user,
-            None => return Err(SnitchError {}),
+            None => return Err(Box::try_from(Error).unwrap()),
         };
         Ok(user.clone())
     }
@@ -53,6 +53,7 @@ impl Users {
         let test_user = User {
             id: 1,
             name: "testuser".to_string(),
+            password: "grr".to_string(),
         };
         let mut users = Users {
             users: Default::default(),

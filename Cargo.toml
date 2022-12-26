@@ -25,3 +25,6 @@ chrono = {version="0.4.21", features=["serde"]}
 snitch = {path="../snitch"}
 async-trait = "0.1.57"
 redis = {version="0.21.5", features=["tokio-comp", "streams"]}
+actix-jwt-auth-middleware = {version="0.2.0", features=["use_jwt_traits"]}
+exonum-crypto = "1.0.0"
+jwt-compact = "0.6.0"

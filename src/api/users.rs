@@ -1,5 +1,5 @@
+use crate::api::AppStateWithCounter;
 use crate::persistance::users::User;
-use crate::{api::AppStateWithCounter};
 use actix_web::{delete, get, post, web, Responder};
 use log::info;
 

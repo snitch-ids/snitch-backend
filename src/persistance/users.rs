@@ -3,6 +3,7 @@ use crate::errors::SnitchError;
 use actix_jwt_auth_middleware::{
     AuthResult, AuthenticationService, Authority, CookieSigner, FromRequest,
 };
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Display, Error, Formatter};
@@ -49,6 +50,20 @@ impl Users {
         Ok(user.clone())
     }
 
+    pub fn get_user_by_name(&self, username: &str) -> Option<&User> {
+        let users = self
+            .users
+            .iter()
+            .map(|(_, user)| user)
+            .filter(|user| user.name == username)
+            .collect::<Vec<&User>>();
+        return if users.len() != 1 {
+            None
+        } else {
+            Some(users[0])
+        };
+    }
+
     pub fn example() -> Self {
         let test_user = User {
             id: 1,
@@ -63,4 +78,20 @@ impl Users {
             .expect("Failed setting up example");
         users
     }
+
+    pub fn valid_password(&self, username: &str, password: &str) -> bool {
+        let userx = self.get_user_by_name(username);
+        return match userx {
+            Some(user) => user.password == password,
+            _ => false,
+        };
+    }
+}
+
+#[test]
+fn test_valid_password() {
+    let users = Users::example();
+    assert_eq!(users.valid_password("noneexistend", "password"), false);
+    assert_eq!(users.valid_password("testuser", "password"), false);
+    assert_eq!(users.valid_password("testuser", "grr"), true);
 }

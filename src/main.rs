@@ -24,6 +24,7 @@ use api::{
 use exonum_crypto::KeyPair;
 use log::info;
 use persistance::{redis::RedisDatabaseService, users::Users};
+use serde::Deserialize;
 use tokio::sync::Mutex;
 
 #[actix_web::main]
@@ -37,7 +38,7 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("failed to create redis service");
 
-    let state = web::Data::new(AppStateWithCounter {
+    let state = Data::new(AppStateWithCounter {
         users: Mutex::new(Users::example()),
         messages: Mutex::new(db_service),
     });
@@ -88,16 +89,26 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
+#[derive(Deserialize)]
+struct LoginRequest {
+    username: String,
+    password: String,
+}
+
 #[get("/login")]
 async fn login(
-    cookie_signer: web::Data<CookieSigner<User, Ed25519>>,
+    login_request: web::Json<LoginRequest>,
+    state: Data<AppStateWithCounter>,
+    cookie_signer: Data<CookieSigner<User, Ed25519>>,
 ) -> AuthResult<HttpResponse> {
-    // let user = User { id: 123, name: "user3434".to_string(), password: "password".to_string() };
+    let users = state.users.lock().await;
+    users.valid_password(&login_request.username, &login_request.password);
     let user = User {
         id: 0,
         name: "".to_string(),
         password: "".to_string(),
     };
+
     info!("{user:?}");
     Ok(HttpResponse::Ok()
         .cookie(cookie_signer.create_access_token_cookie(&user)?)

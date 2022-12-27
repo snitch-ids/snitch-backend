@@ -95,7 +95,7 @@ struct LoginRequest {
     password: String,
 }
 
-#[get("/login")]
+#[post("/login")]
 async fn login(
     login_request: web::Json<LoginRequest>,
     state: Data<AppStateWithCounter>,

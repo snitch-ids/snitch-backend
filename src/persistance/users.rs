@@ -80,8 +80,7 @@ impl Users {
     }
 
     pub fn valid_password(&self, username: &str, password: &str) -> bool {
-        let userx = self.get_user_by_name(username);
-        return match userx {
+        return match self.get_user_by_name(username) {
             Some(user) => user.password == password,
             _ => false,
         };

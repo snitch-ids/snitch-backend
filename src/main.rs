@@ -6,7 +6,7 @@ mod model;
 mod persistance;
 
 use actix_cors::Cors;
-use actix_jwt_auth_middleware::UseJWTOnScope;
+use actix_jwt_auth_middleware::{AuthError, UseJWTOnScope};
 use actix_jwt_auth_middleware::{
     AuthResult, AuthenticationService, Authority, CookieSigner, FromRequest,
 };
@@ -24,7 +24,7 @@ use api::{
 use exonum_crypto::KeyPair;
 use log::info;
 use persistance::{redis::RedisDatabaseService, users::Users};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 #[actix_web::main]
@@ -68,7 +68,7 @@ async fn main() -> std::io::Result<()> {
             .allowed_methods(vec!["GET", "POST"])
             .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
             .allowed_header(http::header::CONTENT_TYPE)
-            .max_age(3600);
+            .max_age(9999999999);
 
         App::new()
             .wrap(cors)
@@ -89,7 +89,7 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 struct LoginRequest {
     username: String,
     password: String,
@@ -101,19 +101,20 @@ async fn login(
     state: Data<AppStateWithCounter>,
     cookie_signer: Data<CookieSigner<User, Ed25519>>,
 ) -> AuthResult<HttpResponse> {
+    info!("login request");
     let users = state.users.lock().await;
-    users.valid_password(&login_request.username, &login_request.password);
-    let user = User {
-        id: 0,
-        name: "".to_string(),
-        password: "".to_string(),
-    };
-
-    info!("{user:?}");
-    Ok(HttpResponse::Ok()
-        .cookie(cookie_signer.create_access_token_cookie(&user)?)
-        .cookie(cookie_signer.create_refresh_token_cookie(&user)?)
-        .body("You are now logged in"))
+    match users.valid_password(&login_request.username, &login_request.password) {
+        true => {
+            let user = users
+                .get_user_by_name(&login_request.username)
+                .expect("failed getting user");
+            Ok(HttpResponse::Ok()
+                .cookie(cookie_signer.create_access_token_cookie(&user)?)
+                .cookie(cookie_signer.create_refresh_token_cookie(&user)?)
+                .body("You are now logged in"))
+        }
+        false => Err(AuthError::NoCookie),
+    }
 }
 
 #[get("/hello")]

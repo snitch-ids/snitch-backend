@@ -15,14 +15,14 @@ use jwt_compact::alg::Ed25519;
 use crate::api::users::get_user_by_id;
 use crate::persistance::users::User;
 use actix_web::web::Data;
-use actix_web::{get, http, web, App, HttpResponse, HttpServer};
+use actix_web::{get, post, http, web, App, HttpResponse, HttpServer};
 use api::{
     messages::{add_message, get_messages_by_hostname},
     users::{add_user, delete_user, get_users},
     welcome, AppStateWithCounter,
 };
 use exonum_crypto::KeyPair;
-use log::info;
+use log::{debug, info};
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
@@ -113,7 +113,10 @@ async fn login(
                 .cookie(cookie_signer.create_refresh_token_cookie(&user)?)
                 .body("You are now logged in"))
         }
-        false => Err(AuthError::NoCookie),
+        false => {
+            debug!("invalid user");
+            Err(AuthError::NoCookieSigner)
+        },
     }
 }
 
@@ -121,4 +124,10 @@ async fn login(
 async fn hello(user: User) -> impl actix_web::Responder {
     info!("hi");
     format!("Hello there, i see your user id is {}.", user.id)
+}
+
+#[get("/x")]
+async fn x(user: User) -> impl actix_web::Responder {
+    info!("x");
+    format!("x {}.", user.id)
 }

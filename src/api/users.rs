@@ -1,5 +1,5 @@
 use crate::api::AppStateWithCounter;
-use crate::persistance::users::User;
+use crate::model::user::User;
 use actix_web::{delete, get, post, web, Responder};
 use log::info;
 
@@ -15,14 +15,8 @@ pub async fn get_user_by_id(
     format!("gotten user {added_user}")
 }
 
-// #[get("/hello")]
-// async fn hello(user: User) -> impl actix_web::Responder {
-//     info!("hi");
-//     format!("Hello there, i see your user id is {}.", user.id)
-// }
-
 #[get("/user")]
-pub(crate) async fn get_users(user: User, state: web::Data<AppStateWithCounter>) -> impl Responder {
+pub(crate) async fn get_users(_user: User, state: web::Data<AppStateWithCounter>) -> impl Responder {
     info!("request users");
     let users = state.users.lock().await;
     let added_user = users.get_users().expect("failed getting user");
@@ -52,4 +46,16 @@ pub(crate) async fn delete_user(
         .delete_user(user_id.into_inner())
         .expect("failed deleting user");
     format!("deleted user {deleted_user}")
+}
+
+#[get("/user/{user_id}/token/")]
+pub(crate) async fn create_token(
+    _user_id: web::Path<i64>,
+    _state: web::Data<AppStateWithCounter>,
+) -> impl Responder {
+    // let mut users = state.users.lock().await;
+    // let user = users.get_user_by_id(user_id.into_inner()).map(|user| user.create_token());
+    // user.create_token();
+    let token = 12;
+    format!("created token {token}")
 }

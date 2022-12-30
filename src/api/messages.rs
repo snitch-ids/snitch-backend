@@ -1,5 +1,5 @@
 use crate::api::AppStateWithCounter;
-use crate::model::MessageBackend;
+use crate::model::message::MessageBackend;
 use crate::persistance::Persist;
 use actix_web::{get, post, web, Responder};
 use log::info;

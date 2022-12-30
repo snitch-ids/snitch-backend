@@ -8,12 +8,12 @@ mod persistance;
 use actix_cors::Cors;
 use actix_jwt_auth_middleware::{AuthError, UseJWTOnScope};
 use actix_jwt_auth_middleware::{
-    AuthResult, AuthenticationService, Authority, CookieSigner, FromRequest,
+    AuthResult, Authority, CookieSigner,
 };
 use jwt_compact::alg::Ed25519;
 
 use crate::api::users::get_user_by_id;
-use crate::persistance::users::User;
+use crate::model::user::User;
 use actix_web::web::Data;
 use actix_web::{get, http, post, web, App, HttpResponse, HttpServer};
 use api::{
@@ -113,8 +113,8 @@ async fn login(
                 .get_user_by_name(&login_request.username)
                 .expect("failed getting user");
             Ok(HttpResponse::Ok()
-                .cookie(cookie_signer.create_access_token_cookie(&user)?)
-                .cookie(cookie_signer.create_refresh_token_cookie(&user)?)
+                .cookie(cookie_signer.create_access_token_cookie(user)?)
+                .cookie(cookie_signer.create_refresh_token_cookie(user)?)
                 .body("You are now logged in"))
         }
         false => {

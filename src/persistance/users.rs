@@ -1,27 +1,18 @@
-use crate::errors::SnitchError;
 
-use actix_jwt_auth_middleware::{
-    AuthResult, AuthenticationService, Authority, CookieSigner, FromRequest,
-};
+
+use crate::User;
+
 use futures::StreamExt;
-use serde::{Deserialize, Serialize};
+
+
 use std::collections::HashMap;
-use std::fmt::{Display, Error, Formatter};
+use std::fmt::{Error};
 
-#[derive(Serialize, Deserialize, Clone, Debug, FromRequest)]
-pub struct User {
-    pub(crate) username: String,
-    pub(crate) password: String,
-}
-
-impl Display for User {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "name={}", self.username)
-    }
-}
+type MessageToken = i64;
+type UserID = i64;
 
 pub struct Users {
-    users: HashMap<i64, User>,
+    users: HashMap<UserID, User>,
 }
 
 impl Users {
@@ -31,7 +22,7 @@ impl Users {
         Ok(user)
     }
 
-    pub fn delete_user(&mut self, user_id: i64) -> Result<User, Box<dyn std::error::Error>> {
+    pub fn delete_user(&mut self, user_id: UserID) -> Result<User, Box<dyn std::error::Error>> {
         let user = self.users.remove(&user_id).expect("failed deleting user");
         Ok(user)
     }
@@ -41,7 +32,7 @@ impl Users {
         Ok(users)
     }
 
-    pub fn get_user_by_id(&self, user_id: i64) -> Result<User, Box<dyn std::error::Error>> {
+    pub fn get_user_by_id(&self, user_id: UserID) -> Result<User, Box<dyn std::error::Error>> {
         let user = self.users.get(&user_id);
         let user = match user {
             Some(user) => user,
@@ -52,16 +43,14 @@ impl Users {
 
     pub fn get_user_by_name(&self, username: &str) -> Option<&User> {
         let users = self
-            .users
-            .iter()
-            .map(|(_, user)| user)
+            .users.values()
             .filter(|user| user.username == username)
             .collect::<Vec<&User>>();
-        return if users.len() != 1 {
+        if users.len() != 1 {
             None
         } else {
             Some(users[0])
-        };
+        }
     }
 
     pub fn example() -> Self {
@@ -89,7 +78,7 @@ impl Users {
 #[test]
 fn test_valid_password() {
     let users = Users::example();
-    assert_eq!(users.valid_password("noneexistend", "password"), false);
+    assert_eq!(users.valid_password("non-existent", "password"), false);
     assert_eq!(users.valid_password("testuser", "password"), false);
     assert_eq!(users.valid_password("testuser", "grr"), true);
 }

@@ -1,4 +1,4 @@
-use crate::model::MessageBackend;
+use crate::model::message::MessageBackend;
 use crate::persistance::Persist;
 use anyhow::{Ok, Result};
 use async_trait::async_trait;

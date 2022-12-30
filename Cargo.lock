@@ -3883,6 +3883,7 @@ dependencies = [
  "jwt-compact",
  "log",
  "mongodb",
+ "rand 0.8.5",
  "redis",
  "reqwest 0.11.11",
  "serde",

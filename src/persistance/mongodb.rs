@@ -1,10 +1,10 @@
-use crate::model::MessageBackend;
 use anyhow::{Ok, Result};
 use async_trait::async_trait;
 use futures::TryStreamExt;
 use mongodb::{bson::doc, options::FindOptions};
 use mongodb::{options::ClientOptions, Client};
 
+use crate::model::message::MessageBackend;
 use crate::persistance::Persist;
 
 pub struct MongoDatabaseService {

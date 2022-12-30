@@ -4,6 +4,8 @@ use redis::{RedisWrite, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use snitch::notifiers::Message;
 
+pub type MessageToken = String;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MessageBackend(Message);
 

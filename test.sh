@@ -20,5 +20,14 @@ curl -b "/tmp/cookie" -X 'POST' -H "Content-Type: application/json" -d '{"userna
 echo "users..."
 curl -b "/tmp/cookie" ${HOST}/user
 
-echo "delete user..."
-curl -b "/tmp/cookie" -X 'DELETE' ${HOST}/user/0
+echo "generate token..."
+curl -b "/tmp/cookie" ${HOST}/user/1/token/new
+curl -b "/tmp/cookie" ${HOST}/user/1/token/new
+curl -b "/tmp/cookie" ${HOST}/user/1/token/new
+curl -b "/tmp/cookie" ${HOST}/user/1/token/new
+
+curl -b "/tmp/cookie" ${HOST}/user/1/token/
+
+
+# echo "delete user..."
+# curl -b "/tmp/cookie" -X 'DELETE' ${HOST}/user/0

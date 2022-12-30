@@ -1,11 +1,12 @@
 use crate::api::AppStateWithCounter;
-use crate::model::user::User;
+use crate::model::user::{User, UserID};
+use crate::TokenState;
 use actix_web::{delete, get, post, web, Responder};
 use log::info;
 
 #[get("/user/{user_id}")]
 pub async fn get_user_by_id(
-    user_id: web::Path<i64>,
+    user_id: web::Path<UserID>,
     state: web::Data<AppStateWithCounter>,
 ) -> impl Responder {
     let users = state.users.lock().await;
@@ -16,7 +17,10 @@ pub async fn get_user_by_id(
 }
 
 #[get("/user")]
-pub(crate) async fn get_users(_user: User, state: web::Data<AppStateWithCounter>) -> impl Responder {
+pub(crate) async fn get_users(
+    _user: User,
+    state: web::Data<AppStateWithCounter>,
+) -> impl Responder {
     info!("request users");
     let users = state.users.lock().await;
     let added_user = users.get_users().expect("failed getting user");
@@ -38,7 +42,7 @@ pub(crate) async fn add_user(
 
 #[delete("/user/{user_id}")]
 pub(crate) async fn delete_user(
-    user_id: web::Path<i64>,
+    user_id: web::Path<UserID>,
     state: web::Data<AppStateWithCounter>,
 ) -> impl Responder {
     let mut users = state.users.lock().await;
@@ -48,14 +52,24 @@ pub(crate) async fn delete_user(
     format!("deleted user {deleted_user}")
 }
 
-#[get("/user/{user_id}/token/")]
+#[get("/user/{user_id}/token/new")]
 pub(crate) async fn create_token(
-    _user_id: web::Path<i64>,
-    _state: web::Data<AppStateWithCounter>,
+    user_id: web::Path<UserID>,
+    token_state: web::Data<TokenState>,
 ) -> impl Responder {
-    // let mut users = state.users.lock().await;
-    // let user = users.get_user_by_id(user_id.into_inner()).map(|user| user.create_token());
-    // user.create_token();
-    let token = 12;
-    format!("created token {token}")
+    info!("generate new token request");
+    let mut tokens = token_state.token.lock().await;
+    let token = tokens.create_token_for_user_id(&user_id.into_inner());
+    format!("{token}")
+}
+
+#[get("/user/{user_id}/token/")]
+pub(crate) async fn get_token(
+    user_id: web::Path<UserID>,
+    token_state: web::Data<TokenState>,
+) -> impl Responder {
+    info!("get token request");
+    let tokens = token_state.token.lock().await;
+    let token = tokens.get_token_of_user_id(&user_id.into_inner());
+    format!("found tokens for user {token:?}")
 }

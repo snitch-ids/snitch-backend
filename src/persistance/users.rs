@@ -1,15 +1,10 @@
-
-
 use crate::User;
 
 use futures::StreamExt;
 
-
+use crate::model::user::UserID;
 use std::collections::HashMap;
-use std::fmt::{Error};
-
-type MessageToken = i64;
-type UserID = i64;
+use std::fmt::Error;
 
 pub struct Users {
     users: HashMap<UserID, User>,
@@ -17,7 +12,7 @@ pub struct Users {
 
 impl Users {
     pub fn add_user(&mut self, user: User) -> Result<User, Box<dyn std::error::Error>> {
-        let id = self.users.len() as i64;
+        let id = self.users.len() as UserID;
         self.users.insert(id, user.clone());
         Ok(user)
     }
@@ -43,7 +38,8 @@ impl Users {
 
     pub fn get_user_by_name(&self, username: &str) -> Option<&User> {
         let users = self
-            .users.values()
+            .users
+            .values()
             .filter(|user| user.username == username)
             .collect::<Vec<&User>>();
         if users.len() != 1 {

@@ -7,18 +7,17 @@ mod persistance;
 
 use actix_cors::Cors;
 use actix_jwt_auth_middleware::{AuthError, UseJWTOnScope};
-use actix_jwt_auth_middleware::{
-    AuthResult, Authority, CookieSigner,
-};
+use actix_jwt_auth_middleware::{AuthResult, Authority, CookieSigner};
 use jwt_compact::alg::Ed25519;
 
-use crate::api::users::get_user_by_id;
+use crate::api::users::get_token;
 use crate::model::user::User;
+use crate::persistance::token::TokenState;
 use actix_web::web::Data;
 use actix_web::{get, http, post, web, App, HttpResponse, HttpServer};
 use api::{
     messages::{add_message, get_messages_by_hostname},
-    users::{add_user, delete_user, get_users},
+    users::{add_user, create_token, delete_user, get_user_by_id, get_users},
     welcome, AppStateWithCounter,
 };
 use exonum_crypto::KeyPair;
@@ -42,6 +41,8 @@ async fn main() -> std::io::Result<()> {
         users: Mutex::new(Users::example()),
         messages: Mutex::new(db_service),
     });
+
+    let state_token = Data::new(TokenState::default());
 
     let port = 8080;
     println!("starting server on port {port}");
@@ -76,6 +77,7 @@ async fn main() -> std::io::Result<()> {
             .service(login)
             .app_data(Data::new(cookie_signer.clone()))
             .app_data(state.clone())
+            .app_data(state_token.clone())
             .service(
                 web::scope("")
                     .service(hello)
@@ -85,6 +87,8 @@ async fn main() -> std::io::Result<()> {
                     .service(delete_user)
                     .service(add_message)
                     .service(get_messages_by_hostname)
+                    .service(create_token)
+                    .service(get_token)
                     .use_jwt(authority.clone()),
             )
     })

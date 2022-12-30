@@ -2,6 +2,8 @@ use actix_jwt_auth_middleware::FromRequest;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
+pub type UserID = i64;
+
 #[derive(Serialize, Deserialize, Clone, Debug, FromRequest)]
 pub struct User {
     pub(crate) username: String,

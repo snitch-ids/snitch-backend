@@ -15,15 +15,13 @@ pub async fn get_user_by_id(
     format!("gotten user {added_user}")
 }
 
-
 // #[get("/hello")]
 // async fn hello(user: User) -> impl actix_web::Responder {
 //     info!("hi");
 //     format!("Hello there, i see your user id is {}.", user.id)
 // }
 
-
-#[get("/user/")]
+#[get("/user")]
 pub(crate) async fn get_users(user: User, state: web::Data<AppStateWithCounter>) -> impl Responder {
     info!("request users");
     let users = state.users.lock().await;
@@ -31,7 +29,7 @@ pub(crate) async fn get_users(user: User, state: web::Data<AppStateWithCounter>)
     format!("gotten user {added_user:?}")
 }
 
-#[post("/user/")]
+#[post("/user")]
 pub(crate) async fn add_user(
     state: web::Data<AppStateWithCounter>,
     user: web::Json<User>,

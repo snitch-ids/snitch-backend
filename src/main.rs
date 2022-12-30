@@ -15,7 +15,7 @@ use jwt_compact::alg::Ed25519;
 use crate::api::users::get_user_by_id;
 use crate::persistance::users::User;
 use actix_web::web::Data;
-use actix_web::{get, post, http, web, App, HttpResponse, HttpServer};
+use actix_web::{get, http, post, web, App, HttpResponse, HttpServer};
 use api::{
     messages::{add_message, get_messages_by_hostname},
     users::{add_user, delete_user, get_users},
@@ -75,14 +75,18 @@ async fn main() -> std::io::Result<()> {
             .service(welcome)
             .service(login)
             .app_data(Data::new(cookie_signer.clone()))
-            .service(web::scope("").service(hello).use_jwt(authority.clone()))
-            .service(add_user)
-            .service(get_user_by_id)
-            .service(get_users)
-            .service(delete_user)
-            .service(add_message)
-            .service(get_messages_by_hostname)
             .app_data(state.clone())
+            .service(
+                web::scope("")
+                    .service(hello)
+                    .service(add_user)
+                    .service(get_user_by_id)
+                    .service(get_users)
+                    .service(delete_user)
+                    .service(add_message)
+                    .service(get_messages_by_hostname)
+                    .use_jwt(authority.clone()),
+            )
     })
     .bind(("127.0.0.1", port))?
     .run()
@@ -116,18 +120,12 @@ async fn login(
         false => {
             debug!("invalid user");
             Err(AuthError::NoCookieSigner)
-        },
+        }
     }
 }
 
 #[get("/hello")]
 async fn hello(user: User) -> impl actix_web::Responder {
     info!("hi");
-    format!("Hello there, i see your user id is {}.", user.id)
-}
-
-#[get("/x")]
-async fn x(user: User) -> impl actix_web::Responder {
-    info!("x");
-    format!("x {}.", user.id)
+    format!("Hello there, i see your user id is {}.", user.username)
 }

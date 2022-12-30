@@ -9,10 +9,16 @@ curl -X POST  "${HOST}/login" -c "/tmp/cookie" \
 }'
 
 echo "hello..."
-curl -b "/tmp/cookie" -X GET ${HOST}/hello
+curl -b "/tmp/cookie" ${HOST}/hello
 
 echo "users..."
-curl -b "/tmp/cookie" -X GET ${HOST}/x/
-#curl -X 'DELETE' http://localhost:8080/user/12
-#curl -X 'GET' http://localhost:8080/user
-#curl -X 'POST' -H "Content-Type: application/json" -d '{"username": "df", "password": "pass"}'  http://localhost:8080/login/
+curl -b "/tmp/cookie" ${HOST}/user
+
+echo "add user..."
+curl -b "/tmp/cookie" -X 'POST' -H "Content-Type: application/json" -d '{"username": "df", "password": "pass"}' ${HOST}/user
+
+echo "users..."
+curl -b "/tmp/cookie" ${HOST}/user
+
+echo "delete user..."
+curl -b "/tmp/cookie" -X 'DELETE' ${HOST}/user/0

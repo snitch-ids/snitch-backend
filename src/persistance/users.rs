@@ -10,14 +10,13 @@ use std::fmt::{Display, Error, Formatter};
 
 #[derive(Serialize, Deserialize, Clone, Debug, FromRequest)]
 pub struct User {
-    pub(crate) id: i64,
-    pub(crate) name: String,
+    pub(crate) username: String,
     pub(crate) password: String,
 }
 
 impl Display for User {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "id={} | name={}", self.id, self.name)
+        writeln!(f, "name={}", self.username)
     }
 }
 
@@ -27,7 +26,8 @@ pub struct Users {
 
 impl Users {
     pub fn add_user(&mut self, user: User) -> Result<User, Box<dyn std::error::Error>> {
-        self.users.insert(user.id, user.clone());
+        let id = self.users.len() as i64;
+        self.users.insert(id, user.clone());
         Ok(user)
     }
 
@@ -55,7 +55,7 @@ impl Users {
             .users
             .iter()
             .map(|(_, user)| user)
-            .filter(|user| user.name == username)
+            .filter(|user| user.username == username)
             .collect::<Vec<&User>>();
         return if users.len() != 1 {
             None
@@ -66,8 +66,7 @@ impl Users {
 
     pub fn example() -> Self {
         let test_user = User {
-            id: 1,
-            name: "testuser".to_string(),
+            username: "testuser".to_string(),
             password: "grr".to_string(),
         };
         let mut users = Users {

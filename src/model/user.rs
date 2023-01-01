@@ -7,7 +7,7 @@ pub type UserID = i64;
 #[derive(Serialize, Deserialize, Clone, Debug, FromRequest)]
 pub struct User {
     pub(crate) username: String,
-    pub(crate) password: String,
+    pub(crate) password_hash: String,
 }
 
 impl Display for User {

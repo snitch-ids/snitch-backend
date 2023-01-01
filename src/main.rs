@@ -4,24 +4,24 @@ mod errors;
 mod intentory;
 mod model;
 mod persistance;
+mod service;
 
 use actix_cors::Cors;
-use actix_jwt_auth_middleware::{AuthError, UseJWTOnScope};
-use actix_jwt_auth_middleware::{AuthResult, Authority, CookieSigner};
+use actix_jwt_auth_middleware::{Authority, CookieSigner, UseJWTOnScope};
 use jwt_compact::alg::Ed25519;
 
+use crate::api::authentication::{hello, login};
 use crate::api::users::get_token;
 use crate::model::user::User;
 use crate::persistance::token::TokenState;
 use actix_web::web::Data;
-use actix_web::{get, http, post, web, App, HttpResponse, HttpServer};
+use actix_web::{http, web, App, HttpServer};
 use api::{
     messages::{add_message, get_messages_by_hostname},
     users::{add_user, create_token, delete_user, get_user_by_id, get_users},
     welcome, AppStateWithCounter,
 };
 use exonum_crypto::KeyPair;
-use log::{debug, info};
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
@@ -95,41 +95,4 @@ async fn main() -> std::io::Result<()> {
     .bind(("127.0.0.1", port))?
     .run()
     .await
-}
-
-#[derive(Deserialize, Serialize)]
-struct LoginRequest {
-    username: String,
-    password: String,
-}
-
-#[post("/login")]
-async fn login(
-    login_request: web::Json<LoginRequest>,
-    state: Data<AppStateWithCounter>,
-    cookie_signer: Data<CookieSigner<User, Ed25519>>,
-) -> AuthResult<HttpResponse> {
-    info!("login request");
-    let users = state.users.lock().await;
-    match users.valid_password(&login_request.username, &login_request.password) {
-        true => {
-            let user = users
-                .get_user_by_name(&login_request.username)
-                .expect("failed getting user");
-            Ok(HttpResponse::Ok()
-                .cookie(cookie_signer.create_access_token_cookie(user)?)
-                .cookie(cookie_signer.create_refresh_token_cookie(user)?)
-                .body("You are now logged in"))
-        }
-        false => {
-            debug!("invalid user");
-            Err(AuthError::NoCookieSigner)
-        }
-    }
-}
-
-#[get("/hello")]
-async fn hello(user: User) -> impl actix_web::Responder {
-    info!("hi");
-    format!("Hello there, i see your user id is {}.", user.username)
 }

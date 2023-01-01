@@ -1,8 +1,8 @@
 use crate::User;
 
-use futures::StreamExt;
-
 use crate::model::user::UserID;
+use crate::service::authentication::{hash_password, valid_hash};
+use argonautica::Hasher;
 use std::collections::HashMap;
 use std::fmt::Error;
 
@@ -52,7 +52,7 @@ impl Users {
     pub fn example() -> Self {
         let test_user = User {
             username: "testuser".to_string(),
-            password: "grr".to_string(),
+            password_hash: hash_password("grr"),
         };
         let mut users = Users {
             users: Default::default(),
@@ -64,10 +64,8 @@ impl Users {
     }
 
     pub fn valid_password(&self, username: &str, password: &str) -> bool {
-        return match self.get_user_by_name(username) {
-            Some(user) => user.password == password,
-            _ => false,
-        };
+        let user = self.get_user_by_name(username).unwrap();
+        valid_hash(&user.password_hash, password)
     }
 }
 

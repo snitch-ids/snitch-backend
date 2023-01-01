@@ -1,6 +1,6 @@
 set -e
 
-HOST=127.0.0.1:8080
+HOST=http://127.0.0.1:8080
 
 echo "login..."
 curl -X POST  "${HOST}/login" -c "/tmp/cookie" \
@@ -22,14 +22,35 @@ curl -b "/tmp/cookie" -X 'POST' -H "Content-Type: application/json" -d '{"userna
 echo "users..."
 curl -b "/tmp/cookie" ${HOST}/user
 
-echo "generate token..."
-curl -b "/tmp/cookie" ${HOST}/user/1/token/new
-curl -b "/tmp/cookie" ${HOST}/user/1/token/new
-curl -b "/tmp/cookie" ${HOST}/user/1/token/new
-curl -b "/tmp/cookie" ${HOST}/user/1/token/new
+echo "generate token... (cropping quotes form JSON)"
+string=$(curl -b "/tmp/cookie" ${HOST}/user/1/token/new)
+string2=${string#'"'}
+string2=${string2%'"'}
 
 curl -b "/tmp/cookie" ${HOST}/user/1/token/
 
+echo "testing a token: ${string2}"
+curl -v -X POST -H "content-type:application/json" -H "authorization: Bearer ${string2}" ${HOST}/messages/ --data-raw '{
+    "hostname": "apple",
+    "title": "title",
+    "content": "content",
+    "timestamp": "2022-01-02T12:12:12Z"
+}'
 
-# echo "delete user..."
-# curl -b "/tmp/cookie" -X 'DELETE' ${HOST}/user/0
+ADMIN_TOKEN="!!!INSECUREADMINTOKEN!!!"
+echo "test admin token"
+curl -v -X POST -H "content-type:application/json" -H "authorization: Bearer ${ADMIN_TOKEN}" ${HOST}/messages/ --data-raw '{
+    "hostname": "admin",
+    "title": "admintitle",
+    "content": "content",
+    "timestamp": "2022-01-02T12:12:12Z"
+}'
+
+# echo "testing an INVALID token"
+# curl  -X POST  -H "Content-Type:application/json" -H "Authorization: Bearer INVEALIDTOKEN123" 127.0.0.1:8080/messages/ --data-raw '{
+#     "hostname": "apple",
+#     "title": "title",
+#     "content": "content",
+#     "timestamp": "2022-01-02T12:12:12Z"
+# }'
+# 

@@ -11,7 +11,6 @@ actix-web = "4.1.0"
 tokio = { version = "1", features = ["full"] }
 serde = {version = "*", features=["derive"]}
 serde_json = "*"
-actix-web-httpauth = { git = "https://github.com/actix/actix-web-httpauth" }
 derive_more = "0.99.17"
 reqwest = "0.11.11"
 mongodb = "2.3.0"
@@ -29,3 +28,4 @@ exonum-crypto = "1.0.0"
 jwt-compact = "0.6.0"
 rand = "0.8.5"
 argonautica = "0.2.0"
+actix-web-httpauth = "0.8.0"

@@ -1,13 +1,19 @@
+use chrono::{DateTime, Utc};
+use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut};
 
 use redis::{RedisWrite, ToRedisArgs};
 use serde::{Deserialize, Serialize};
-use snitch::notifiers::Message;
 
 pub type MessageToken = String;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct MessageBackend(Message);
+pub struct MessageBackend {
+    pub hostname: String,
+    pub title: String,
+    pub content: String,
+    pub timestamp: DateTime<Utc>,
+}
 
 impl ToRedisArgs for MessageBackend {
     fn write_redis_args<W>(&self, out: &mut W)
@@ -16,25 +22,5 @@ impl ToRedisArgs for MessageBackend {
     {
         let as_string = serde_json::to_string(self).expect("failed parsing to string");
         out.write_arg(as_string.as_bytes());
-    }
-}
-
-impl Deref for MessageBackend {
-    type Target = Message;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for MessageBackend {
-    fn deref_mut(&mut self) -> &mut Message {
-        &mut self.0
-    }
-}
-
-impl From<Message> for MessageBackend {
-    fn from(msg: Message) -> MessageBackend {
-        MessageBackend(msg)
     }
 }

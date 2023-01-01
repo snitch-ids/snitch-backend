@@ -1,7 +1,12 @@
 use crate::api::AppStateWithCounter;
-use crate::model::message::MessageBackend;
+use crate::model::message::{MessageBackend, MessageToken};
 use crate::persistance::Persist;
 use actix_web::{get, post, web, Responder};
+use std::fmt::format;
+
+use crate::errors::ServiceError;
+use crate::TokenState;
+use actix_web_httpauth::extractors::bearer::BearerAuth;
 use log::info;
 use serde::Deserialize;
 use serde::Serialize;
@@ -18,30 +23,36 @@ struct MessageResponse {
 
 #[post("/messages/")]
 pub(crate) async fn add_message(
+    auth: BearerAuth,
     message: web::Json<MessageBackend>,
+    token_state: web::Data<TokenState>,
     state: web::Data<AppStateWithCounter>,
-) -> impl Responder {
-    info!("adding message");
+) -> Result<impl Responder, ServiceError> {
+    let token_store = token_state.token.lock().await;
+    let token: MessageToken = auth.token().trim().to_string();
+
+    if !token_store.has_token(token) {
+        return Err(ServiceError::BadRequest("invalid token".to_string()));
+    }
     let obj = message.into_inner();
     let mut message_db = state.messages.lock().await;
     message_db
         .add_message(&obj)
         .await
         .expect("failed adding message");
-    "added message".to_string()
+    Ok(format!("success"))
 }
 
 #[get("/messages/")]
 pub(crate) async fn get_messages_by_hostname(
     info: web::Query<MessageRequest>,
     state: web::Data<AppStateWithCounter>,
-) -> impl Responder {
+) -> Result<impl Responder, ServiceError> {
     info!("received request for {}", &info.hostname);
     let mut messages_state = state.messages.lock().await;
     let messages: Vec<MessageBackend> = messages_state
         .find_messages(&info.hostname)
         .await
-        .expect("failed retrieving message");
-    info!("found {} entires", messages.len());
-    web::Json(messages)
+        .map_err(|_| ServiceError::InternalServerError)?;
+    Ok(web::Json(messages))
 }

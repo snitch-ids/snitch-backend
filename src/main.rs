@@ -13,15 +13,17 @@ use jwt_compact::alg::Ed25519;
 use crate::api::authentication::{hello, login};
 use crate::api::users::get_token;
 use crate::model::user::User;
-use crate::persistance::token::TokenState;
+use crate::persistance::token::{TokenState, TokenStore};
 use actix_web::web::Data;
-use actix_web::{http, web, App, HttpServer};
+use actix_web::{get, http, web, App, HttpServer};
+use actix_web_httpauth::extractors::bearer::{self, BearerAuth, Config};
 use api::{
     messages::{add_message, get_messages_by_hostname},
     users::{add_user, create_token, delete_user, get_user_by_id, get_users},
     welcome, AppStateWithCounter,
 };
 use exonum_crypto::KeyPair;
+use log::info;
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
@@ -42,7 +44,7 @@ async fn main() -> std::io::Result<()> {
         messages: Mutex::new(db_service),
     });
 
-    let state_token = Data::new(TokenState::default());
+    let state_token = Data::new(TokenState::new());
 
     let port = 8080;
     println!("starting server on port {port}");
@@ -74,10 +76,16 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .service(welcome)
+            .service(add_message)
             .service(login)
             .app_data(Data::new(cookie_signer.clone()))
             .app_data(state.clone())
             .app_data(state_token.clone())
+            .app_data(
+                Config::default()
+                    .realm("Restricted area")
+                    .scope("email photo"),
+            )
             .service(
                 web::scope("")
                     .service(hello)
@@ -85,7 +93,6 @@ async fn main() -> std::io::Result<()> {
                     .service(get_user_by_id)
                     .service(get_users)
                     .service(delete_user)
-                    .service(add_message)
                     .service(get_messages_by_hostname)
                     .service(create_token)
                     .service(get_token)
@@ -96,3 +103,10 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
+
+// #[get("/hello")]
+// pub async fn hellox(user: User) -> impl actix_web::Responder {
+//     info!("hi");
+//     format!("Hello there, i see your user id is {}.", user.username)
+// }
+//

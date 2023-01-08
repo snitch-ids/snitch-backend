@@ -46,7 +46,8 @@ async fn main() -> std::io::Result<()> {
 
     let state_token = Data::new(TokenState::new());
 
-    let port = 8080;
+    let port = 8081;
+    let url_frontend = "http://localhost:8080".to_string();
     println!("starting server on port {port}");
 
     let key_pair = KeyPair::random();
@@ -66,7 +67,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin(&format!("http://127.0.0.1:{port}"))
+            .allowed_origin(&url_frontend)
             .allowed_origin_fn(|origin, _req_head| origin.as_bytes().ends_with(b".rust-lang.org"))
             .allowed_methods(vec!["GET", "POST"])
             .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])

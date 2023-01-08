@@ -64,8 +64,11 @@ impl Users {
     }
 
     pub fn valid_password(&self, username: &str, password: &str) -> bool {
-        let user = self.get_user_by_name(username).unwrap();
-        valid_hash(&user.password_hash, password)
+        let user = self.get_user_by_name(username);
+        return match user {
+            Some(u) => valid_hash(&u.password_hash, password),
+            None => false,
+        };
     }
 }
 

@@ -1,6 +1,6 @@
 set -e
 
-HOST=http://127.0.0.1:8080
+HOST=http://127.0.0.1:8081
 
 echo "login..."
 curl -X POST  "${HOST}/login" -c "/tmp/cookie" \

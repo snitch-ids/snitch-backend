@@ -47,7 +47,7 @@ async fn main() -> std::io::Result<()> {
     let state_token = Data::new(TokenState::new());
 
     let port = 8081;
-    let url_frontend = "http://localhost:8080".to_string();
+    let url_frontend = "http://127.0.0.1:8080".to_string();
     println!("starting server on port {port}");
 
     let key_pair = KeyPair::random();

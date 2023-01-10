@@ -104,10 +104,3 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
-
-// #[get("/hello")]
-// pub async fn hellox(user: User) -> impl actix_web::Responder {
-//     info!("hi");
-//     format!("Hello there, i see your user id is {}.", user.username)
-// }
-//

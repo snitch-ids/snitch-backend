@@ -1,10 +1,11 @@
 use crate::api::AppStateWithCounter;
 use crate::model::message::{MessageBackend, MessageToken};
 use crate::persistance::Persist;
-use actix_web::{get, post, web, Responder};
+use actix_web::{get, post, web, HttpResponse, Responder};
 use std::fmt::format;
 
 use crate::errors::ServiceError;
+use crate::model::user::User;
 use crate::TokenState;
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use log::info;
@@ -43,9 +44,9 @@ pub(crate) async fn add_message(
     Ok(format!("success"))
 }
 
-#[get("/messages/")]
+#[post("/messages/all/")]
 pub(crate) async fn get_messages_by_hostname(
-    info: web::Query<MessageRequest>,
+    info: web::Json<MessageRequest>,
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, ServiceError> {
     info!("received request for {}", &info.hostname);

@@ -47,7 +47,8 @@ async fn main() -> std::io::Result<()> {
     let state_token = Data::new(TokenState::new());
 
     let port = 8081;
-    let url_frontend = "http://127.0.0.1:8080".to_string();
+    let url_frontend = "http://localhost:8080".to_string();
+    let url_frontend_ip = "http://127.0.0.1:8080".to_string();
     println!("starting server on port {port}");
 
     let key_pair = KeyPair::random();
@@ -66,13 +67,21 @@ async fn main() -> std::io::Result<()> {
         .expect("failed authority");
 
     HttpServer::new(move || {
-        let cors = Cors::default()
-            .allowed_origin(&url_frontend)
-            .allowed_origin_fn(|origin, _req_head| origin.as_bytes().ends_with(b".rust-lang.org"))
-            .allowed_methods(vec!["GET", "POST"])
-            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
-            .allowed_header(http::header::CONTENT_TYPE)
-            .max_age(9999999999);
+        let cors = Cors::permissive(); //  Cors::new().supports_credentials();
+        // Cors::default()
+        //     // .allowed_origin(&url_frontend)
+        //     // .allowed_origin(&url_frontend_ip)
+        //     .allow_any_header()
+        //     .allow_any_origin()
+        //     .allow_any_method()
+        //     // .allowed_origin_fn(|origin, _req_head| origin.as_bytes().ends_with(b".rust-lang.org"))
+        //     // .allowed_origin_fn(|origin, _req_head| origin.as_bytes().ends_with(b".rust-lang.org"))
+        //     // .allowed_methods(vec!["GET", "POST"])
+        //     // .allowed_headers(vec![http::header::ACCESS_CONTROL_ALLOW_HEADERS,
+        //     //                       http::header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
+        //     //                       http::header::AUTHORIZATION, http::header::ACCEPT, http::header::COOKIE])
+        //     // // .allowed_header(http::header::CONTENT_TYPE)
+        //     .max_age(9999999999);
 
         App::new()
             .wrap(cors)
@@ -90,11 +99,11 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("")
                     .service(hello)
+                    .service(get_messages_by_hostname) // for testing no auth
                     .service(add_user)
                     .service(get_user_by_id)
                     .service(get_users)
                     .service(delete_user)
-                    .service(get_messages_by_hostname)
                     .service(create_token)
                     .service(get_token)
                     .use_jwt(authority.clone()),

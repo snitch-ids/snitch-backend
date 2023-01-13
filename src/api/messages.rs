@@ -55,5 +55,6 @@ pub(crate) async fn get_messages_by_hostname(
         .find_messages(&info.hostname)
         .await
         .map_err(|_| ServiceError::InternalServerError)?;
+    info!("returning {} objects ", messages.len());
     Ok(web::Json(messages))
 }

@@ -4,7 +4,6 @@ use crate::errors::ServiceError::InternalServerError;
 use crate::model::user::{User, UserID};
 use crate::service::authentication::hash_password;
 use crate::{Deserialize, Serialize, TokenState};
-use actix_jwt_auth_middleware::FromRequest;
 use actix_web::{delete, get, post, web, Responder};
 use log::info;
 
@@ -23,7 +22,6 @@ pub async fn get_user_by_id(
 
 #[get("/user")]
 pub(crate) async fn get_users(
-    _user: User,
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, ServiceError> {
     info!("request users");
@@ -32,7 +30,7 @@ pub(crate) async fn get_users(
     Ok(web::Json(added_user))
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, FromRequest)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AddUserRequest {
     pub(crate) username: String,
     pub(crate) password: String,

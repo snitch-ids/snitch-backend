@@ -7,20 +7,25 @@ mod persistance;
 mod service;
 
 use actix_cors::Cors;
+use actix_identity::{Identity, IdentityMiddleware};
 use actix_session::storage::RedisSessionStore;
 
-use actix_jwt_auth_middleware::{Authority, CookieSigner, UseJWTOnScope};
-use actix_session::{Session, SessionMiddleware};
-use jwt_compact::alg::Ed25519;
+use actix_session::{
+    config::PersistentSession, storage::CookieSessionStore, Session, SessionMiddleware,
+};
 
-use crate::api::authentication::{hello, login};
+use crate::api::authentication::{index, login, logout};
 use crate::api::users::get_token;
 use crate::errors::ServiceError;
 use crate::model::user::User;
 use crate::persistance::token::{TokenState, TokenStore};
+use actix_web::cookie::time::Duration;
 use actix_web::cookie::Key;
+use actix_web::http::StatusCode;
 use actix_web::web::Data;
-use actix_web::{get, http, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{
+    error, get, http, middleware, web, App, HttpMessage, HttpResponse, HttpServer, Responder,
+};
 use api::{
     messages::{add_message, get_messages_by_hostname},
     users::{add_user, create_token, delete_user, get_user_by_id, get_users},
@@ -35,9 +40,12 @@ fn get_secret_key() -> Key {
     Key::generate()
 }
 
+const ONE_MINUTE: Duration = Duration::minutes(1);
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init();
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
     // let db_service = MongoDatabaseService::new("mongodb://root:kdjie234!@localhost:27017")
     //     .await
     //     .expect("failed to create monogdb service");
@@ -57,19 +65,18 @@ async fn main() -> std::io::Result<()> {
     println!("starting server on port {port}");
 
     let secret_key = get_secret_key();
-    let redis_connection_string = "redis://localhost:6379";
-    let store = RedisSessionStore::new(redis_connection_string)
-        .await
-        .unwrap();
 
     HttpServer::new(move || {
+        let cors = Cors::permissive();
+        // .allowed_methods(vec!["GET", "POST", "OPTIONS"]);
+
         App::new()
-            .app_data(state.clone())
-            .app_data(state_token.clone())
-            .service(add_message)
+            .wrap(cors)
             .service(login)
+            .service(logout)
+            .service(index)
+            .service(add_message)
             .service(welcome)
-            .service(hello)
             .service(get_messages_by_hostname) // for testing no auth
             .service(add_user)
             .service(get_user_by_id)
@@ -77,6 +84,18 @@ async fn main() -> std::io::Result<()> {
             .service(delete_user)
             .service(create_token)
             .service(get_token)
+            .wrap(IdentityMiddleware::default())
+            .wrap(
+                SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
+                    .cookie_name("auth-example".to_owned())
+                    .cookie_secure(false)
+                    .session_lifecycle(PersistentSession::default().session_ttl(ONE_MINUTE))
+                    .build(),
+            )
+            .wrap(middleware::NormalizePath::trim())
+            .wrap(middleware::Logger::default())
+            .app_data(state.clone())
+            .app_data(state_token.clone())
     })
     .bind(("localhost", port))?
     .run()

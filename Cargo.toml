@@ -8,6 +8,11 @@ edition = "2021"
 [dependencies]
 actix = "0.13.0"
 actix-web = "4.1.0"
+actix-web-lab = "0.18.9"
+actix-identity = "0.5.2"
+actix-session = {version="0.7.2", features=["redis-rs-session", "cookie-session"]}
+actix-web-httpauth = "0.8.0"
+actix-cors = "0.6.2"
 tokio = { version = "1", features = ["full"] }
 serde = {version = "*", features=["derive"]}
 serde_json = "*"
@@ -16,17 +21,13 @@ reqwest = "0.11.11"
 mongodb = "2.3.0"
 anyhow = "1.0"
 futures = "0.3.21"
-actix-cors = "0.6.2"
 env_logger = "0.9.0"
 log = "0.4.17"
 chrono = {version="0.4.21", features=["serde"]}
 snitch = {path="../snitch"}
 async-trait = "0.1.57"
 redis = {version="0.21.5", features=["tokio-comp", "streams"]}
-actix-jwt-auth-middleware = {version="0.2.0", features=["use_jwt_traits"]}
 exonum-crypto = "1.0.0"
 jwt-compact = "0.6.0"
 rand = "0.8.5"
 argonautica = "0.2.0"
-actix-web-httpauth = "0.8.0"
-actix-session = {version="0.7.2", features=["redis-rs-session"]}

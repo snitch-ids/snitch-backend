@@ -35,7 +35,7 @@ pub async fn login(
             let user = users
                 .get_user_by_name(&login_request.username)
                 .expect("failed getting user");
-            Identity::login(&req.extensions(), user.username.clone()).unwrap();
+            Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
             Redirect::to("/").using_status_code(StatusCode::FOUND)
         }
         false => {

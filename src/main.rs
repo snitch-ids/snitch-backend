@@ -41,6 +41,7 @@ fn get_secret_key() -> Key {
 }
 
 const ONE_MINUTE: Duration = Duration::minutes(1);
+const USER_COOKIE_NAME: &str = "user_cookie";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -68,7 +69,6 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::permissive();
-        // .allowed_methods(vec!["GET", "POST", "OPTIONS"]);
 
         App::new()
             .wrap(cors)
@@ -87,7 +87,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(IdentityMiddleware::default())
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
-                    .cookie_name("auth-example".to_owned())
+                    .cookie_name(USER_COOKIE_NAME.to_string())
                     .cookie_secure(false)
                     .session_lifecycle(PersistentSession::default().session_ttl(ONE_MINUTE))
                     .build(),

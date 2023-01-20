@@ -1,6 +1,4 @@
-use crate::User;
-
-use crate::model::user::UserID;
+use crate::model::user::{User, UserID};
 use crate::service::authentication::{hash_password, valid_hash};
 use argonautica::Hasher;
 use std::collections::HashMap;
@@ -12,8 +10,7 @@ pub struct Users {
 
 impl Users {
     pub fn add_user(&mut self, user: User) -> Result<User, Box<dyn std::error::Error>> {
-        let id = self.users.len() as UserID;
-        self.users.insert(id, user.clone());
+        self.users.insert(user.user_id.clone(), user.clone());
         Ok(user)
     }
 
@@ -50,10 +47,7 @@ impl Users {
     }
 
     pub fn example() -> Self {
-        let test_user = User {
-            username: "testuser".to_string(),
-            password_hash: hash_password("grr"),
-        };
+        let test_user = User::new("testuser".to_string(), hash_password("grr"));
         let mut users = Users {
             users: Default::default(),
         };

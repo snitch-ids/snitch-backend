@@ -31,3 +31,11 @@ exonum-crypto = "1.0.0"
 jwt-compact = "0.6.0"
 rand = "0.8.5"
 argonautica = "0.2.0"
+
+[dependencies.uuid]
+version = "1.2.2"
+features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]

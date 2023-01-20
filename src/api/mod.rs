@@ -1,5 +1,6 @@
 pub mod authentication;
 pub mod messages;
+pub mod token;
 pub mod users;
 
 use actix_web::{get, Responder};

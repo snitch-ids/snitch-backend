@@ -4,7 +4,6 @@ use crate::persistance::Persist;
 use actix_identity::Identity;
 use actix_web::{post, web, Responder};
 
-
 use crate::errors::ServiceError;
 
 use crate::TokenState;

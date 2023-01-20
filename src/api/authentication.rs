@@ -1,14 +1,11 @@
-
 use crate::AppStateWithCounter;
 use actix_identity::Identity;
-
-
 
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{error, get, post, web, HttpMessage, Responder};
 use actix_web_lab::web::Redirect;
-use log::{debug};
+use log::debug;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]

@@ -8,7 +8,6 @@ use actix_identity::Identity;
 use actix_web::{delete, get, post, web, Responder};
 use log::info;
 
-
 #[get("/user")]
 pub async fn get_user_by_id(
     id: Identity,
@@ -68,25 +67,4 @@ pub(crate) async fn delete_user(
         .delete_user(user_id)
         .map_err(|_e| InternalServerError)?;
     Ok(web::Json(deleted_user))
-}
-
-#[get("/user/token/new")]
-pub(crate) async fn create_token(
-    id: Identity,
-    token_state: web::Data<TokenState>,
-) -> Result<impl Responder, ServiceError> {
-    info!("generate new token request");
-    let user_id = UserID::parse_str(&id.id().unwrap()).unwrap();
-    let mut tokens = token_state.token.lock().await;
-    let token = tokens.create_token_for_user_id(&user_id);
-    Ok(web::Json(token))
-}
-
-#[get("/user/token")]
-pub(crate) async fn get_token(id: Identity, token_state: web::Data<TokenState>) -> impl Responder {
-    info!("get token request");
-    let user_id = UserID::parse_str(&id.id().unwrap()).unwrap();
-    let tokens = token_state.token.lock().await;
-    let token = tokens.get_token_of_user_id(&user_id);
-    format!("{token:?}")
 }

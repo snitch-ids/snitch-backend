@@ -1,9 +1,8 @@
-
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 use uuid;
-use uuid::{Uuid};
+use uuid::Uuid;
 
 // #[derive(Hash, Eq, Serialize, Deserialize, Clone, Debug, Display, PartialEq)]
 // #[repr(transparent)]

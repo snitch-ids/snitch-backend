@@ -7,28 +7,21 @@ mod persistance;
 mod service;
 
 use actix_cors::Cors;
-use actix_identity::{IdentityMiddleware};
+use actix_identity::IdentityMiddleware;
 
+use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
 
-use actix_session::{
-    config::PersistentSession, storage::CookieSessionStore, SessionMiddleware,
-};
-
-use crate::api::authentication::{index, login, logout};
-use crate::api::users::get_token;
-
-
-use crate::persistance::token::{TokenState};
+use crate::persistance::token::TokenState;
 use actix_web::cookie::time::Duration;
 use actix_web::cookie::Key;
 
 use actix_web::web::Data;
-use actix_web::{
-    middleware, App, HttpServer,
-};
+use actix_web::{middleware, App, HttpServer};
 use api::{
+    authentication::{index, login, logout},
     messages::{add_message, get_messages_by_hostname},
-    users::{add_user, create_token, delete_user, get_user_by_id, get_users},
+    token::{create_token, get_token},
+    users::{add_user, delete_user, get_user_by_id, get_users},
     welcome, AppStateWithCounter,
 };
 

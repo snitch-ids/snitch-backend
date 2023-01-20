@@ -6,7 +6,7 @@ use rand::Rng;
 use std::collections::{HashMap, HashSet};
 
 use tokio::sync::Mutex;
-use uuid::{uuid};
+use uuid::uuid;
 
 const TOKEN_LENGTH: i32 = 32;
 

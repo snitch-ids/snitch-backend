@@ -7,7 +7,7 @@ use crate::{Deserialize, Serialize, TokenState};
 use actix_identity::Identity;
 use actix_web::{delete, get, post, web, Responder};
 use log::info;
-use uuid::Uuid;
+
 
 #[get("/user")]
 pub async fn get_user_by_id(
@@ -19,20 +19,20 @@ pub async fn get_user_by_id(
     let users = state.users.lock().await;
     let added_user = users
         .get_user_by_id(id_as_string)
-        .map_err(|e| InternalServerError)?;
+        .map_err(|_e| InternalServerError)?;
 
     Ok(web::Json(added_user))
 }
 
 #[get("/user/all")]
 pub(crate) async fn get_users(
-    id: Identity,
+    _id: Identity,
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, ServiceError> {
     info!("request users ... needs check for admin rights");
     //if is_admin(id) {
     let users = state.users.lock().await;
-    let added_user = users.get_users().map_err(|e| InternalServerError)?;
+    let added_user = users.get_users().map_err(|_e| InternalServerError)?;
     Ok(web::Json(added_user))
 }
 
@@ -53,7 +53,7 @@ pub(crate) async fn add_user(
     let new_user = User::new(user.username.clone(), hash_password(&user.password));
 
     let mut users = state.users.lock().await;
-    let added_user = users.add_user(new_user).map_err(|e| InternalServerError)?;
+    let added_user = users.add_user(new_user).map_err(|_e| InternalServerError)?;
     Ok(web::Json(added_user))
 }
 
@@ -63,10 +63,10 @@ pub(crate) async fn delete_user(
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, ServiceError> {
     let mut users = state.users.lock().await;
-    let user_id = UserID::parse_str(&*id.id().unwrap()).unwrap();
+    let user_id = UserID::parse_str(&id.id().unwrap()).unwrap();
     let deleted_user = users
         .delete_user(user_id)
-        .map_err(|e| InternalServerError)?;
+        .map_err(|_e| InternalServerError)?;
     Ok(web::Json(deleted_user))
 }
 

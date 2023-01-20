@@ -7,31 +7,31 @@ mod persistance;
 mod service;
 
 use actix_cors::Cors;
-use actix_identity::{Identity, IdentityMiddleware};
-use actix_session::storage::RedisSessionStore;
+use actix_identity::{IdentityMiddleware};
+
 
 use actix_session::{
-    config::PersistentSession, storage::CookieSessionStore, Session, SessionMiddleware,
+    config::PersistentSession, storage::CookieSessionStore, SessionMiddleware,
 };
 
 use crate::api::authentication::{index, login, logout};
 use crate::api::users::get_token;
-use crate::errors::ServiceError;
-use crate::model::user::User;
-use crate::persistance::token::{TokenState, TokenStore};
+
+
+use crate::persistance::token::{TokenState};
 use actix_web::cookie::time::Duration;
 use actix_web::cookie::Key;
-use actix_web::http::StatusCode;
+
 use actix_web::web::Data;
 use actix_web::{
-    error, get, http, middleware, web, App, HttpMessage, HttpResponse, HttpServer, Responder,
+    middleware, App, HttpServer,
 };
 use api::{
     messages::{add_message, get_messages_by_hostname},
     users::{add_user, create_token, delete_user, get_user_by_id, get_users},
     welcome, AppStateWithCounter,
 };
-use log::info;
+
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;

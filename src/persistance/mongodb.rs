@@ -12,7 +12,7 @@ pub struct MongoDatabaseService {
 }
 
 impl MongoDatabaseService {
-    pub async fn new(url: &str) -> Result<Self> {
+    pub async fn _new(url: &str) -> Result<Self> {
         let mut client_options = ClientOptions::parse(url).await?;
 
         client_options.app_name = Some("Snitch".to_string());

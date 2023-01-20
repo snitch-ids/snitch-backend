@@ -1,14 +1,14 @@
-use crate::model::user::User;
+
 use crate::AppStateWithCounter;
 use actix_identity::Identity;
-use actix_session::Session;
-use actix_web::cookie::Cookie;
-use actix_web::http::header::LOCATION;
+
+
+
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
-use actix_web::{error, get, post, web, HttpMessage, HttpResponse, Responder};
+use actix_web::{error, get, post, web, HttpMessage, Responder};
 use actix_web_lab::web::Redirect;
-use log::{debug, info};
+use log::{debug};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]

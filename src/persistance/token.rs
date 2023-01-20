@@ -1,13 +1,12 @@
 use crate::model::message::MessageToken;
 use crate::model::user::UserID;
-use actix::ActorStreamExt;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
-use std::collections::hash_map::DefaultHasher;
+
 use std::collections::{HashMap, HashSet};
-use std::hash::{Hash, Hasher};
+
 use tokio::sync::Mutex;
-use uuid::{uuid, Uuid};
+use uuid::{uuid};
 
 const TOKEN_LENGTH: i32 = 32;
 
@@ -37,7 +36,7 @@ impl TokenStore {
             .map(|_| rng.sample(Alphanumeric) as char)
             .collect();
 
-        let user_token = self.tokens.entry(user_id.clone()).or_default();
+        let user_token = self.tokens.entry(*user_id).or_default();
         user_token.insert(token.clone());
 
         token
@@ -50,7 +49,7 @@ impl TokenStore {
     pub fn has_token(&self, token: MessageToken) -> bool {
         for x in self.tokens.values() {
             let value = x.contains(&*token);
-            if value == true {
+            if value {
                 return true;
             }
         }

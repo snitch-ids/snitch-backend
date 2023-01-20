@@ -1,9 +1,9 @@
-use derive_more::Display;
+
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-use std::str::FromStr;
+
 use uuid;
-use uuid::{Error, Uuid};
+use uuid::{Uuid};
 
 // #[derive(Hash, Eq, Serialize, Deserialize, Clone, Debug, Display, PartialEq)]
 // #[repr(transparent)]

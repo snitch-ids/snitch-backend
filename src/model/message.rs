@@ -1,6 +1,4 @@
 use chrono::{DateTime, Utc};
-use std::hash::{Hash, Hasher};
-use std::ops::{Deref, DerefMut};
 
 use redis::{RedisWrite, ToRedisArgs};
 use serde::{Deserialize, Serialize};

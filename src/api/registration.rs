@@ -38,25 +38,29 @@ impl PendingUsersState {
     }
 }
 
-const REPLY_URL: &str = "localhost:8081/register/reply";
+const REPLY_URL: &str = "http://localhost:8081/register";
 
-#[get("/register")]
+#[post("/register")]
 pub async fn register(
     register_request: web::Json<RegistrationRequest>,
-    data: web::Data<PendingUsersState>,
+    pendin_users_state: web::Data<PendingUsersState>,
 ) -> String {
-    let mut users = data.users.lock().unwrap();
+    let mut users = pendin_users_state.users.lock().unwrap();
     let nonce = random_alphanumeric_string(40);
     users.insert(nonce.clone(), register_request.into_inner());
     format!("{}/{}", REPLY_URL, nonce)
 }
 
-#[post("/register/{nonce}")]
+#[get("/register/{nonce}")]
 pub async fn register_reply(
+    nonce: web::Path<Nonce>,
     state: Data<AppStateWithCounter>,
-    pending_users: Data<Mutex<PendingUsersState>>,
+    pendin_users_state: Data<PendingUsersState>,
 ) -> impl Responder {
+    let nonce = nonce.into_inner();
+    let mut users = pendin_users_state.users.lock().unwrap();
+    let confirmed = users.get(&nonce).unwrap();
     // let users_pending = pending_users.user_store.lock().await;
-    // info!("register {}", register_request.username);
-    format!("done")
+    info!("register {:?}", confirmed);
+    format!("done {}", nonce)
 }

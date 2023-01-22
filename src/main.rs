@@ -27,7 +27,7 @@ use api::{
     welcome, AppStateWithCounter,
 };
 
-use crate::api::registration::{PendingUsersState, RegistrationRequest};
+use crate::api::registration::{register_reply, PendingUsersState, RegistrationRequest};
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
@@ -68,6 +68,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .service(register)
+            .service(register_reply)
             .service(login)
             .service(logout)
             .service(index)

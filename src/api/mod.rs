@@ -1,5 +1,6 @@
 pub mod authentication;
 pub mod messages;
+pub mod registration;
 pub mod token;
 pub mod users;
 

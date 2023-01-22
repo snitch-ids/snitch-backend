@@ -8,6 +8,7 @@ mod service;
 
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
+use std::collections::HashMap;
 
 use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
 
@@ -16,15 +17,17 @@ use actix_web::cookie::time::Duration;
 use actix_web::cookie::Key;
 
 use actix_web::web::Data;
-use actix_web::{middleware, App, HttpServer};
+use actix_web::{middleware, web, App, HttpServer};
 use api::{
     authentication::{index, login, logout},
     messages::{add_message, get_messages_by_hostname},
+    registration::register,
     token::{create_token, get_token},
     users::{add_user, delete_user, get_user_by_id, get_users},
     welcome, AppStateWithCounter,
 };
 
+use crate::api::registration::{PendingUsersState, RegistrationRequest};
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
@@ -52,7 +55,6 @@ async fn main() -> std::io::Result<()> {
         users: Mutex::new(Users::example()),
         messages: Mutex::new(db_service),
     });
-
     let state_token = Data::new(TokenState::new());
 
     let port = 8081;
@@ -62,9 +64,10 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::permissive();
-
+        let pending_state = Data::new(PendingUsersState::new());
         App::new()
             .wrap(cors)
+            .service(register)
             .service(login)
             .service(logout)
             .service(index)
@@ -89,6 +92,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .app_data(state.clone())
             .app_data(state_token.clone())
+            .app_data(pending_state.clone())
     })
     .bind(("localhost", port))?
     .run()

@@ -5,10 +5,11 @@ use rand::Rng;
 
 use std::collections::{HashMap, HashSet};
 
+use crate::service::token::random_alphanumeric_string;
 use tokio::sync::Mutex;
 use uuid::uuid;
 
-const TOKEN_LENGTH: i32 = 32;
+const TOKEN_LENGTH: u32 = 32;
 
 #[derive(Default)]
 pub struct TokenStore {
@@ -31,11 +32,7 @@ impl TokenStore {
     }
 
     pub fn create_token_for_user_id(&mut self, user_id: &UserID) -> MessageToken {
-        let mut rng = rand::thread_rng();
-        let token: String = (0..TOKEN_LENGTH)
-            .map(|_| rng.sample(Alphanumeric) as char)
-            .collect();
-
+        let token = random_alphanumeric_string(TOKEN_LENGTH);
         let user_token = self.tokens.entry(*user_id).or_default();
         user_token.insert(token.clone());
 

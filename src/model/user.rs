@@ -33,7 +33,7 @@ impl Display for User {
 }
 
 impl User {
-    pub fn example () -> Self {
-        Self{ username: "Peter".to_string(), password_hash: "asdfasdfasdf".to_string() }
+    pub fn example() -> Self {
+        Self::new("Peter".to_string(), "asdfasdfasdf".to_string())
     }
 }

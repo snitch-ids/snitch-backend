@@ -1,6 +1,6 @@
 use crate::api::AppStateWithCounter;
 use crate::model::message::{MessageBackend, MessageToken};
-use crate::persistance::Persist;
+use crate::persistance::PersistMessage;
 use actix_identity::Identity;
 use actix_web::{post, web, Responder};
 

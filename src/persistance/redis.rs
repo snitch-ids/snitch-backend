@@ -1,15 +1,15 @@
-use std::fmt::Error;
 use crate::model::message::MessageBackend;
+use crate::model::user::User;
 use crate::persistance::PersistMessage;
 use anyhow::{Ok, Result};
 use async_trait::async_trait;
 use log::info;
 use redis::aio;
-use redis::JsonAsyncCommands;
 use redis::AsyncCommands;
 use redis::Commands;
+use redis::JsonAsyncCommands;
 use serde_json::json;
-use crate::model::user::User;
+use std::fmt::Error;
 
 pub struct RedisDatabaseService {
     pub client: redis::Client,
@@ -24,7 +24,11 @@ impl RedisDatabaseService {
     }
 
     pub async fn add_user(mut self, user: User) {
-        let _: String = self.connection.json_set("user", "$x", &json!(user)).await.unwrap();
+        let _: String = self
+            .connection
+            .json_set("user", "$x", &json!(user))
+            .await
+            .unwrap();
     }
 
     pub async fn get_user(mut self, user: User) -> User {
@@ -61,12 +65,13 @@ impl PersistMessage for RedisDatabaseService {
 async fn test_add_user() {
     use crate::model::user::User;
     let test_user = User::example();
-    let db = RedisDatabaseService::new("redis://127.0.0.1:6379").await.unwrap();
+    let db = RedisDatabaseService::new("redis://127.0.0.1:6379")
+        .await
+        .unwrap();
 
     let x = db.add_user(test_user).await;
     println!("done");
 }
-
 
 #[tokio::test]
 async fn redis_test() {

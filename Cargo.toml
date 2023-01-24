@@ -26,7 +26,7 @@ log = "0.4.17"
 chrono = {version="0.4.21", features=["serde"]}
 snitch = {path="../snitch"}
 async-trait = "0.1.57"
-redis = {version="0.21.5", features=["tokio-comp", "streams"]}
+redis = {version= "0.22.3", features=["tokio-comp", "streams", "json"]}
 exonum-crypto = "1.0.0"
 jwt-compact = "0.6.0"
 rand = "0.8.5"

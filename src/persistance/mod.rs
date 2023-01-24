@@ -8,7 +8,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait Persist {
+pub trait PersistMessage {
     async fn add_message(&mut self, message: &MessageBackend) -> Result<()>;
 
     async fn find_messages(&mut self, hostname: &str) -> Result<Vec<MessageBackend>>;

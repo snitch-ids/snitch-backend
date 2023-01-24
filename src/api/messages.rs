@@ -1,6 +1,6 @@
 use crate::api::AppStateWithCounter;
 use crate::model::message::{MessageBackend, MessageToken};
-use crate::persistance::Persist;
+use crate::persistance::PersistMessage;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use std::fmt::format;
 

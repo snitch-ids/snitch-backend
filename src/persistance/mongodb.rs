@@ -5,7 +5,9 @@ use mongodb::{bson::doc, options::FindOptions};
 use mongodb::{options::ClientOptions, Client};
 
 use crate::model::message::MessageBackend;
-use crate::persistance::Persist;
+use crate::model::user::User;
+use crate::persistance::PersistMessage;
+use crate::persistance::redis::RedisDatabaseService;
 
 pub struct MongoDatabaseService {
     pub client: Client,
@@ -23,7 +25,7 @@ impl MongoDatabaseService {
 }
 
 #[async_trait]
-impl Persist for MongoDatabaseService {
+impl PersistMessage for MongoDatabaseService {
     async fn add_message(&mut self, message: &MessageBackend) -> Result<()> {
         let db = self.client.database("snitch");
         let typed_collection = db.collection::<MessageBackend>("messages");
@@ -45,19 +47,4 @@ impl Persist for MongoDatabaseService {
         }
         Ok(results)
     }
-}
-
-#[tokio::test]
-async fn my_test() {
-    use snitch::test_utils::get_test_message;
-
-    let mut db_service = MongoDatabaseService::new("mongodb://root:kdjie234!@localhost:27017")
-        .await
-        .unwrap();
-
-    let message: MessageBackend = get_test_message().into();
-    let hostname = "Mariuss-MacBook-Air.local";
-    db_service.add_message(&message).await;
-    let messages = db_service.find_messages(hostname).await.unwrap();
-    println!("found messages: {messages:?}");
 }

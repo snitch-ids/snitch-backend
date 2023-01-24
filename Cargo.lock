@@ -23,7 +23,7 @@ dependencies = [
  "pin-project-lite",
  "smallvec 1.9.0",
  "tokio 1.23.0",
- "tokio-util 0.7.3",
+ "tokio-util",
 ]
 
 [[package]]
@@ -40,7 +40,7 @@ dependencies = [
  "memchr",
  "pin-project-lite",
  "tokio 1.23.0",
- "tokio-util 0.7.3",
+ "tokio-util",
 ]
 
 [[package]]
@@ -112,7 +112,7 @@ dependencies = [
  "percent-encoding 2.2.0",
  "pin-project-lite",
  "rand 0.8.5",
- "sha1 0.10.1",
+ "sha1",
  "smallvec 1.9.0",
  "tracing",
  "zstd",
@@ -894,7 +894,7 @@ dependencies = [
  "memchr",
  "pin-project-lite",
  "tokio 1.23.0",
- "tokio-util 0.7.3",
+ "tokio-util",
 ]
 
 [[package]]
@@ -1753,7 +1753,7 @@ dependencies = [
  "indexmap",
  "slab",
  "tokio 1.23.0",
- "tokio-util 0.7.3",
+ "tokio-util",
  "tracing",
 ]
 
@@ -2510,7 +2510,7 @@ dependencies = [
  "thiserror",
  "tokio 1.23.0",
  "tokio-rustls",
- "tokio-util 0.7.3",
+ "tokio-util",
  "trust-dns-proto",
  "trust-dns-resolver",
  "typed-builder",
@@ -3169,9 +3169,9 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "0.21.5"
+version = "0.22.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a80b5f38d7f5a020856a0e16e40a9cfabf88ae8f0e4c2dcd8a3114c1e470852"
+checksum = "aa8455fa3621f6b41c514946de66ea0531f57ca017b2e6c7cc368035ea5b46df"
 dependencies = [
  "arc-swap",
  "async-trait",
@@ -3180,12 +3180,15 @@ dependencies = [
  "dtoa",
  "futures 0.3.25",
  "futures-util",
- "itoa 0.4.8",
+ "itoa 1.0.2",
  "percent-encoding 2.2.0",
  "pin-project-lite",
- "sha1 0.6.1",
+ "ryu",
+ "serde",
+ "serde_json",
+ "sha1_smol",
  "tokio 1.23.0",
- "tokio-util 0.6.10",
+ "tokio-util",
  "url 2.3.1",
 ]
 
@@ -3647,15 +3650,6 @@ dependencies = [
  "cfg-if 1.0.0",
  "cpufeatures",
  "digest",
-]
-
-[[package]]
-name = "sha1"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1da05c97445caa12d05e848c4a4fcbbea29e748ac28f7e80e9b010392063770"
-dependencies = [
- "sha1_smol",
 ]
 
 [[package]]
@@ -4212,20 +4206,6 @@ dependencies = [
  "futures 0.1.31",
  "slab",
  "tokio-executor",
-]
-
-[[package]]
-name = "tokio-util"
-version = "0.6.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36943ee01a6d67977dd3f84a5a1d2efeb4ada3a1ae771cadfaa535d9d9fc6507"
-dependencies = [
- "bytes 1.2.0",
- "futures-core",
- "futures-sink",
- "log",
- "pin-project-lite",
- "tokio 1.23.0",
 ]
 
 [[package]]

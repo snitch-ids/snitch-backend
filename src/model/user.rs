@@ -31,3 +31,9 @@ impl Display for User {
         writeln!(f, "name={}, uuid={}", self.username, self.user_id)
     }
 }
+
+impl User {
+    pub fn example () -> Self {
+        Self{ username: "Peter".to_string(), password_hash: "asdfasdfasdf".to_string() }
+    }
+}

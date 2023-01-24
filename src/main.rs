@@ -27,7 +27,7 @@ use api::{
     welcome, AppStateWithCounter,
 };
 
-use crate::api::registration::{register_reply, PendingUsersState, RegistrationRequest};
+use crate::api::registration::{register_reply, RegistrationRequest};
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
@@ -64,7 +64,6 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::permissive();
-        let pending_state = Data::new(PendingUsersState::new());
         App::new()
             .wrap(cors)
             .service(register)
@@ -93,7 +92,6 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .app_data(state.clone())
             .app_data(state_token.clone())
-            .app_data(pending_state.clone())
     })
     .bind(("localhost", port))?
     .run()

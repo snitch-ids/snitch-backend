@@ -20,34 +20,24 @@ pub struct RegistrationRequest {
     password: String,
 }
 
+use crate::model::user::{Nonce, User};
 use crate::service::token::random_alphanumeric_string;
 use actix_web::{get, App, HttpServer};
-
-type Nonce = String;
-
-pub struct PendingUsersState {
-    pub(crate) users: Mutex<HashMap<Nonce, RegistrationRequest>>,
-}
-
-impl PendingUsersState {
-    pub fn new() -> Self {
-        let empty_pending_state: HashMap<Nonce, RegistrationRequest> = HashMap::new();
-        PendingUsersState {
-            users: Mutex::new(empty_pending_state),
-        }
-    }
-}
 
 const REPLY_URL: &str = "http://localhost:8081/register";
 
 #[post("/register")]
 pub async fn register(
     register_request: web::Json<RegistrationRequest>,
-    pendin_users_state: web::Data<PendingUsersState>,
+    state: web::Data<AppStateWithCounter>,
 ) -> String {
-    let mut users = pendin_users_state.users.lock().unwrap();
+    info!("register");
     let nonce = random_alphanumeric_string(40);
-    users.insert(nonce.clone(), register_request.into_inner());
+    let mut users = state.messages.lock().await;
+    let user_request = register_request.into_inner();
+    // users.insert(nonce.clone(),);
+    let user = User::new(user_request.username, user_request.password);
+    users.add_user(&user);
     format!("{}/{}", REPLY_URL, nonce)
 }
 
@@ -55,12 +45,11 @@ pub async fn register(
 pub async fn register_reply(
     nonce: web::Path<Nonce>,
     state: Data<AppStateWithCounter>,
-    pendin_users_state: Data<PendingUsersState>,
 ) -> impl Responder {
     let nonce = nonce.into_inner();
-    let mut users = pendin_users_state.users.lock().unwrap();
-    let confirmed = users.get(&nonce).unwrap();
+    let mut users = state.users.lock().await;
+    // let confirmed = users.get_users().unwrap();
     // let users_pending = pending_users.user_store.lock().await;
-    info!("register {:?}", confirmed);
+    // info!("register {:?}", confirmed);
     format!("done {}", nonce)
 }

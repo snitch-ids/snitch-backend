@@ -1,5 +1,5 @@
 use crate::model::message::MessageBackend;
-use crate::model::user::User;
+use crate::model::user::{User, UserID};
 use crate::persistance::PersistMessage;
 use anyhow::{Ok, Result};
 use async_trait::async_trait;
@@ -23,17 +23,22 @@ impl RedisDatabaseService {
         Ok(RedisDatabaseService { client, connection })
     }
 
-    pub async fn add_user(mut self, user: User) {
+    pub async fn add_user(&mut self, user: &User) {
+        let user_id = user.user_id;
         let _: String = self
             .connection
-            .json_set("user", "$x", &json!(user))
+            .json_set("user", user_id.to_string(), &json!(user))
             .await
             .unwrap();
     }
 
-    pub async fn get_user(mut self, user: User) -> User {
-        let user: User = self.connection.json_get("user", "$x").await.unwrap();
-        user
+    pub async fn get_user(mut self, user_id: &UserID) -> User {
+        let user_str: String = self
+            .connection
+            .json_get("user", user_id.to_string())
+            .await
+            .unwrap();
+        serde_json::from_str(&user_str).unwrap()
     }
 }
 
@@ -65,26 +70,10 @@ impl PersistMessage for RedisDatabaseService {
 async fn test_add_user() {
     use crate::model::user::User;
     let test_user = User::example();
-    let db = RedisDatabaseService::new("redis://127.0.0.1:6379")
+    let mut db = RedisDatabaseService::new("redis://127.0.0.1:6379")
         .await
         .unwrap();
 
-    let x = db.add_user(test_user).await;
-    println!("done");
-}
-
-#[tokio::test]
-async fn redis_test() {
-    use snitch::test_utils::get_test_message;
-
-    let mut db_service = RedisDatabaseService::new("redis://127.0.0.1:6379")
-        .await
-        .expect("failed to connect to redis server");
-    println!("START!");
-    let message: MessageBackend = get_test_message().into();
-    let hostname = message.hostname.as_ref();
-    println!("test message {message:?}");
-    db_service.add_message(&message).await.unwrap();
-    let messages = db_service.find_messages(hostname).await.unwrap();
-    println!("found messages: {messages:?}");
+    let x = db.add_user(&test_user).await;
+    let x = db.get_user(&test_user.user_id).await;
 }

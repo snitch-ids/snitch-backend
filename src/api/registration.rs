@@ -35,9 +35,8 @@ pub async fn register(
     let nonce = random_alphanumeric_string(40);
     let mut users = state.messages.lock().await;
     let user_request = register_request.into_inner();
-    // users.insert(nonce.clone(),);
     let user = User::new(user_request.username, user_request.password);
-    users.add_user(&user);
+    users.add_user_pending(&user, &nonce).await;
     format!("{}/{}", REPLY_URL, nonce)
 }
 
@@ -47,9 +46,7 @@ pub async fn register_reply(
     state: Data<AppStateWithCounter>,
 ) -> impl Responder {
     let nonce = nonce.into_inner();
-    let mut users = state.users.lock().await;
-    // let confirmed = users.get_users().unwrap();
-    // let users_pending = pending_users.user_store.lock().await;
-    // info!("register {:?}", confirmed);
-    format!("done {}", nonce)
+    let mut users = state.messages.lock().await;
+    users.confirm_user_pending(&nonce).await.unwrap();
+    format!("registered")
 }

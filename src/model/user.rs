@@ -12,18 +12,10 @@ pub(crate) type UserID = Uuid;
 pub(crate) type Nonce = String;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum ConfirmationStatus {
-    PENDING,
-    CONFIRMED,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct User {
     pub(crate) user_id: UserID,
     pub(crate) username: String,
     pub(crate) password_hash: String,
-    pub(crate) email_state: ConfirmationStatus,
-    pub(crate) confirmation_nonce: Option<Nonce>,
 }
 
 impl User {
@@ -33,8 +25,6 @@ impl User {
             user_id: UserID::new_v4(),
             username,
             password_hash,
-            email_state: ConfirmationStatus::PENDING,
-            confirmation_nonce: None,
         }
     }
 }

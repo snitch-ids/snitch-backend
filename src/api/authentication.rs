@@ -27,21 +27,16 @@ pub async fn login(
     state: Data<AppStateWithCounter>,
 ) -> impl Responder {
     let users = state.users.lock().await;
-    match users.valid_password(&login_request.username, &login_request.password) {
-        true => {
-            let user = users
-                .get_user_by_name(&login_request.username)
-                .expect("failed getting user");
-            Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
-            Redirect::to("/").using_status_code(StatusCode::FOUND)
-        }
-        false => {
-            debug!(
-                "invalid username {} {}",
-                login_request.username, login_request.password
-            );
-            Redirect::to("/login").using_status_code(StatusCode::NOT_FOUND)
-        }
+    let username = &login_request.username;
+    if users.valid_password(username, &login_request.password) {
+        let user = users
+            .get_user_by_name(username)
+            .expect("failed getting user");
+        Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
+        Redirect::to("/messages").using_status_code(StatusCode::FOUND)
+    } else {
+        debug!("invalid username {username}",);
+        Redirect::to("/login").using_status_code(StatusCode::NOT_FOUND)
     }
 }
 

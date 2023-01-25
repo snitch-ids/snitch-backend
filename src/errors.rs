@@ -1,6 +1,3 @@
-#[derive(Debug)]
-pub struct SnitchError {}
-
 use actix_web::{error::ResponseError, HttpResponse};
 use derive_more::Display;
 

@@ -16,10 +16,11 @@ use std::sync::Mutex;
 
 #[derive(Deserialize, Debug)]
 pub struct RegistrationRequest {
-    username: String,
-    password: String,
+    pub(crate) username: String,
+    pub(crate) password: String,
 }
 
+use crate::api::users::AddUserRequest;
 use crate::model::user::{Nonce, User};
 use crate::service::token::random_alphanumeric_string;
 use actix_web::{get, App, HttpServer};
@@ -35,7 +36,7 @@ pub async fn register(
     let nonce = random_alphanumeric_string(40);
     let mut users = state.messages.lock().await;
     let user_request = register_request.into_inner();
-    let user = User::new(user_request.username, user_request.password);
+    let user = User::from(user_request);
     users.add_user_pending(&user, &nonce).await;
     format!("{}/{}", REPLY_URL, nonce)
 }

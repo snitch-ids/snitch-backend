@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
+use crate::api::registration::RegistrationRequest;
 use crate::service::authentication::hash_password;
 use uuid;
 use uuid::Uuid;
@@ -38,5 +39,11 @@ impl Display for User {
 impl User {
     pub fn example() -> Self {
         Self::new("Peter".to_string(), "asdfasdfasdf".to_string())
+    }
+}
+
+impl From<RegistrationRequest> for User {
+    fn from(value: RegistrationRequest) -> Self {
+        User::new(value.username, value.password)
     }
 }

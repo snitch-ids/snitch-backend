@@ -13,11 +13,10 @@ pub async fn get_user_by_id(
     id: Identity,
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, ServiceError> {
-    let xxx = id.id().unwrap();
-    let id_as_string = UserID::parse_str(&xxx).unwrap();
+    let user_id: UserID = id.id().unwrap().into();
     let users = state.users.lock().await;
     let added_user = users
-        .get_user_by_id(id_as_string)
+        .get_user_by_id(user_id)
         .map_err(|_e| InternalServerError)?;
 
     Ok(web::Json(added_user))
@@ -62,7 +61,7 @@ pub(crate) async fn delete_user(
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, ServiceError> {
     let mut users = state.users.lock().await;
-    let user_id = UserID::parse_str(&id.id().unwrap()).unwrap();
+    let user_id: UserID = id.id().unwrap().into();
     let deleted_user = users
         .delete_user(user_id)
         .map_err(|_e| InternalServerError)?;

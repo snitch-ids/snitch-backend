@@ -1,6 +1,7 @@
 use crate::AppStateWithCounter;
 use actix_identity::Identity;
 
+use crate::service::authentication::valid_hash;
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{error, get, post, web, HttpMessage, Responder};
@@ -26,12 +27,10 @@ pub async fn login(
     login_request: web::Json<LoginRequest>,
     state: Data<AppStateWithCounter>,
 ) -> impl Responder {
-    let users = state.users.lock().await;
+    let mut users = state.messages.lock().await;
     let username = &login_request.username;
-    if users.valid_password(username, &login_request.password) {
-        let user = users
-            .get_user_by_name(username)
-            .expect("failed getting user");
+    let user = users.get_user_by_name(username).await;
+    if valid_hash(&user.password_hash, &login_request.password) {
         Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
         Redirect::to("/messages").using_status_code(StatusCode::FOUND)
     } else {

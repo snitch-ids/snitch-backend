@@ -11,8 +11,6 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::future::Future;
 use std::ops::Deref;
-use std::string::ToString;
-use std::sync::Mutex;
 
 #[derive(Deserialize, Debug)]
 pub struct RegistrationRequest {

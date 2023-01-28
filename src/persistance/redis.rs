@@ -4,14 +4,16 @@ use crate::model::user::{Nonce, User, UserID};
 use crate::persistance::PersistMessage;
 use anyhow::{Ok, Result};
 use async_trait::async_trait;
+use itertools::Itertools;
 use log::info;
-use redis::AsyncCommands;
 use redis::Commands;
 use redis::JsonAsyncCommands;
 use redis::{aio, RedisResult};
+use redis::{AsyncCommands, FromRedisValue, Value};
 use serde::Serialize;
 use serde_json::json;
-use std::fmt::Error;
+use std::env::var;
+use std::fmt::{format, Error};
 
 pub struct RedisDatabaseService {
     pub client: redis::Client,
@@ -25,37 +27,33 @@ impl RedisDatabaseService {
     pub async fn new(url: &str) -> Result<Self> {
         let client = redis::Client::open(url)?;
         let connection = client.get_async_connection().await?;
-        let mut db = RedisDatabaseService { client, connection };
-        db.setup().await;
-        Ok(db)
+        Ok(RedisDatabaseService { client, connection })
     }
 
-    async fn setup(&mut self) {
+    pub async fn add_user_index(&mut self, user: &User) {
+        let user_id = &user.user_id;
+        let username = &user.username;
         let _: () = self
             .connection
-            .json_set("user", ".", &json!(EMPTY {}))
-            .await
-            .unwrap();
-        let _: () = self
-            .connection
-            .json_set("user_pending", ".", &json!(EMPTY {}))
+            .set(format!("user_usernames:{username}"), user_id.to_string())
             .await
             .unwrap();
     }
 
     pub async fn add_user(&mut self, user: &User) {
-        let user_id = user.user_id;
+        let user_id = &user.user_id;
         let _: () = self
             .connection
-            .json_set("user", user_id.to_string(), &json!(user))
+            .json_set(format!("user:{user_id}"), "$", &json!(user))
             .await
             .unwrap();
+        self.add_user_index(&user).await;
     }
 
     pub async fn add_user_pending(&mut self, user: &User, nonce: &Nonce) {
         let _: () = self
             .connection
-            .json_set("user_pending", nonce, &json!(user))
+            .json_set(format!("user_pending:{nonce}"), "$", &json!(user))
             .await
             .unwrap();
     }
@@ -71,31 +69,83 @@ impl RedisDatabaseService {
     pub async fn get_user_pending(&mut self, nonce: &Nonce) -> User {
         let user_str: String = self
             .connection
-            .json_get("user_pending", nonce)
+            .json_get(format!("user_pending:{nonce}"), ".")
             .await
             .unwrap();
-        serde_json::from_str(&user_str).unwrap()
+        serde_json::from_str(&user_str).unwrap() // impl FromStr
     }
 
     pub async fn delete_user_pending(&mut self, nonce: &Nonce) {
         let _: () = self
             .connection
-            .json_del("user_pending", nonce)
+            .json_del(format!("user_pending:{nonce}"), ".")
             .await
             .unwrap();
     }
 
-    pub async fn get_user_by_id(mut self, user_id: &UserID) -> User {
+    pub async fn get_user_by_id(&mut self, user_id: &UserID) -> User {
+        info!("user_id {user_id}");
         let user_str: String = self
             .connection
-            .json_get("user", user_id.to_string())
+            .json_get(format!("user:{user_id}"), ".")
             .await
             .unwrap();
         serde_json::from_str(&user_str).unwrap()
     }
 
-    pub fn get_user_by_name(&self, username: &str) -> Option<&User> {
-        todo!()
+    pub async fn get_user_by_name(&mut self, username: &str) -> User {
+        info!("get user by name {username}");
+        let result: RedisResult<Value> = self
+            .connection
+            .get(format!("user_usernames:{username}"))
+            .await;
+        let user_id: UserID = String::from_redis_value(&result.unwrap()).unwrap().into();
+        self.get_user_by_id(&user_id).await
+    }
+
+    pub async fn get_user_by_name_index(&mut self, username: &str) {
+        // Create index for username
+        // FT.CREATE idx:username
+        //   ON JSON
+        //   PREFIX 1 "user:"
+        //   SCHEMA $.username AS username TEXT
+        //
+        // Then search with
+        // FT.SEARCH idx:username_pending "1"
+        // redis returned list of key-value pairs
+        // key: user:b545cc19-169a-425f-8f97-3cff9d6237fc
+        // value: {\"user_id\":\"b545cc19-169a-425f-8f97-3cff9d6237fc\",\"username\":\"1\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$n9HwKN4bu7cUCojo08Tx8ke9Lr0gUBSqQrfE7h67oKE$LDeeOCtslWxiCEQdxx4xAUFsyzczlhC+FX1C/rwcoqk\"}
+        // key: user:b545cc19-169a-425f-8f97-3cff9d6237fc
+        // value: {\"user_id\":\"b545cc19-169a-425f-8f97-3cff9d6237fc\",\"username\":\"1\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$n9HwKN4bu7cUCojo08Tx8ke9Lr0gUBSqQrfE7h67oKE$LDeeOCtslWxiCEQdxx4xAUFsyzczlhC+FX1C/rwcoqk\"}//
+        // ....
+
+        // Failed to parse:
+        // bulk(int(4), string-data('"user:9511c06b-4f59-4fca-8ac5-fa544d7c1cdf"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"9511c06b-4f59-4fca-8ac5-fa544d7c1cdf\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$fpL+GDtUBZ1MMzgppZ3VUaz11w+rBqTr3umNY1kDxWw$TZLCDdX4ZFAMykPWodwnwdDJw6lS/QyG9SaGK31quSI\"}"')), string-data('"user:09f53c2e-421a-4b88-9aa4-5084e4c3111f"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"09f53c2e-421a-4b88-9aa4-5084e4c3111f\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$02yKNoQzWk1NKw5t7iHh0EpEQqWOPfK9U6h42D3lWcI$E0dp+o5tuJqzMDZ7v8F+nOB0sSEL7l+RGUOzHS1MRw8\"}"')), string-data('"user:9fd64f6f-bb5c-4a99-868a-5280191d1880"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"9fd64f6f-bb5c-4a99-868a-5280191d1880\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$9zKdgiZZzL0P9Kp5dTq4MgtqTG5RN4q7SVAw3dlN5yc$fGNscohzAQlpjEim6KXx0yrBntGGTl1HfJGnR1+sUdM\"}"')), string-data('"user:35c23941-dc22-4721-b574-7ea31a887cc9"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"35c23941-dc22-4721-b574-7ea31a887cc9\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$smWqFAA9lIDGWFYroGHlwdMxWJaBfCxQzOYCYAvhjYk$BQlWXTQnk8XfQfRbQq8Ll93W067elMWWvE+M5JUMrSM\"}"'))))
+        //{  N returned objects,     user-id                                     } , {   Path,                 JSON-as-string-data ...
+        //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
+        //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
+        //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
+        // let result = redis::cmd("FT.SEARCH").arg("idx:username").arg(username).query_async(&mut self.connection).await.unwrap();
+        //
+        // match resulta {
+        //     Value::Nil => {}
+        //     Value::Int(_) => {}
+        //     Value::Data(_) => {}
+        //     Value::Bulk(v) => {User::from_redis_values(&*v).expect("TODO: panic message");}
+        //     Value::Status(_) => {}
+        //     Value::Okay => {}
+        // }
+        // for (_, v) in result.as_sequence()
+        //         .unwrap()
+        //         .iter()
+        //         .skip(1)
+        //         .into_iter()
+        //         .tuples()
+        // {
+        //     println!("{v:?}");
+        //     User::from_redis_value(v).expect("TODO: panic message");
+        // }
+        // result.to_vec();
     }
 }
 
@@ -126,11 +176,15 @@ impl PersistMessage for RedisDatabaseService {
 #[tokio::test]
 async fn test_add_user() {
     use crate::model::user::User;
-    let test_user = User::example();
+    let mut test_user = User::example();
+    test_user.username = "xxxx".to_string();
     let mut db = RedisDatabaseService::new("redis://127.0.0.1:6379")
         .await
         .unwrap();
 
     let x = db.add_user(&test_user).await;
     let x = db.get_user_by_id(&test_user.user_id).await;
+    let x = db.get_user_by_name(&test_user.username).await;
+    assert_eq!(x.username, test_user.username);
+    assert_eq!(x.user_id, test_user.user_id);
 }

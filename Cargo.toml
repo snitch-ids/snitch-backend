@@ -31,6 +31,8 @@ exonum-crypto = "1.0.0"
 jwt-compact = "0.6.0"
 rand = "0.8.5"
 argonautica = "0.2.0"
+itertools = "0.10.5"
+redis-derive = "0.1.6"
 
 [dependencies.uuid]
 version = "1.2.2"

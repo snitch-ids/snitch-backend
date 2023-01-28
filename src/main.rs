@@ -1,4 +1,6 @@
 #![feature(drain_filter)]
+extern crate core;
+
 mod api;
 mod errors;
 mod intentory;

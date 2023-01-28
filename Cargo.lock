@@ -112,7 +112,7 @@ dependencies = [
  "percent-encoding 2.2.0",
  "pin-project-lite",
  "rand 0.8.5",
- "sha1",
+ "sha1 0.10.1",
  "smallvec 1.9.0",
  "tracing",
  "zstd",
@@ -3183,6 +3183,7 @@ dependencies = [
  "percent-encoding 2.2.0",
  "pin-project-lite",
  "ryu",
+ "sha1 0.6.1",
  "tokio 1.23.0",
  "tokio-util",
  "url 2.3.1",
@@ -3208,6 +3209,18 @@ dependencies = [
  "tokio 1.23.0",
  "tokio-util",
  "url 2.3.1",
+]
+
+[[package]]
+name = "redis-derive"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "272596dc88e664ab28f15a6c4561a9928c4b41585be7b692305a2267ef57ba1e"
+dependencies = [
+ "quote 1.0.20",
+ "redis 0.21.7",
+ "serde",
+ "syn",
 ]
 
 [[package]]
@@ -3672,6 +3685,15 @@ dependencies = [
 
 [[package]]
 name = "sha1"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1da05c97445caa12d05e848c4a4fcbbea29e748ac28f7e80e9b010392063770"
+dependencies = [
+ "sha1_smol",
+]
+
+[[package]]
+name = "sha1"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c77f4e7f65455545c2153c1253d25056825e77ee2533f0e41deb65a93a34852f"
@@ -3807,11 +3829,13 @@ dependencies = [
  "env_logger 0.9.0",
  "exonum-crypto",
  "futures 0.3.25",
+ "itertools",
  "jwt-compact",
  "log",
  "mongodb",
  "rand 0.8.5",
  "redis 0.22.3",
+ "redis-derive",
  "reqwest 0.11.11",
  "serde",
  "serde_json",

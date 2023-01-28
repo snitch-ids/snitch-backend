@@ -11,7 +11,7 @@ pub(crate) async fn create_token(
     token_state: web::Data<TokenState>,
 ) -> Result<impl Responder, ServiceError> {
     info!("generate new token request");
-    let user_id = UserID::parse_str(&id.id().unwrap()).unwrap();
+    let user_id: UserID = id.id().unwrap().into();
     let mut tokens = token_state.token.lock().await;
     let token = tokens.create_token_for_user_id(&user_id);
     Ok(web::Json(token))
@@ -23,7 +23,7 @@ pub(crate) async fn get_token(
     token_state: web::Data<TokenState>,
 ) -> Result<impl Responder, ServiceError> {
     info!("get token request");
-    let user_id = UserID::parse_str(&id.id().unwrap()).unwrap();
+    let user_id: UserID = id.id().unwrap().into();
     let tokens = token_state.token.lock().await;
     let token = tokens.get_token_of_user_id(&user_id).unwrap();
     Ok(web::Json(token.clone()))

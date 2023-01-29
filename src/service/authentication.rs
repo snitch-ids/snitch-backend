@@ -1,4 +1,4 @@
-use argonautica::{Hasher, Verifier};
+use argonautica::{Error, Hasher, Verifier};
 
 pub fn hash_password(password: &str) -> String {
     let mut hasher = Hasher::default();
@@ -15,9 +15,9 @@ pub fn hash_password(password: &str) -> String {
     hash
 }
 
-pub fn valid_hash(hash: &str, password: &str) -> bool {
+pub fn valid_hash(hash: &str, password: &str) -> Result<bool, Error> {
     let mut verifier = Verifier::default();
-    let is_valid = verifier
+    verifier
         .with_hash(hash)
         .with_password(password)
         .with_secret_key(
@@ -27,8 +27,6 @@ pub fn valid_hash(hash: &str, password: &str) -> bool {
         ",
         )
         .verify()
-        .unwrap();
-    is_valid
 }
 
 #[test]

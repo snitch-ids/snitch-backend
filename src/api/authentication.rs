@@ -2,10 +2,13 @@ use crate::AppStateWithCounter;
 use actix_identity::Identity;
 
 use crate::service::authentication::valid_hash;
+use actix_web::error::ErrorUnauthorized;
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{error, get, post, web, HttpMessage, Responder};
+use actix_web_lab::__reexports::tracing::field::debug;
 use actix_web_lab::web::Redirect;
+use argonautica::Error;
 use log::debug;
 use serde::{Deserialize, Serialize};
 
@@ -26,16 +29,22 @@ pub async fn login(
     req: actix_web::HttpRequest,
     login_request: web::Json<LoginRequest>,
     state: Data<AppStateWithCounter>,
-) -> impl Responder {
+) -> actix_web::Result<impl Responder> {
     let mut users = state.messages.lock().await;
     let username = &login_request.username;
-    let user = users.get_user_by_name(username).await;
-    if valid_hash(&user.password_hash, &login_request.password) {
-        Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
-        Redirect::to("/messages").using_status_code(StatusCode::FOUND)
-    } else {
-        debug!("invalid username {username}",);
-        Redirect::to("/login").using_status_code(StatusCode::NOT_FOUND)
+    let user = users
+        .get_user_by_name(username)
+        .await
+        .map_err(|e| ErrorUnauthorized(e))?;
+    match valid_hash(&user.password_hash, &login_request.password) {
+        Ok(b) => {
+            Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
+            Ok(format!("username"))
+        }
+        Err(e) => {
+            debug!("invalid username {username}",);
+            Err(error::ErrorUnauthorized(e))
+        }
     }
 }
 

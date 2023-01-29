@@ -16,7 +16,7 @@ use actix_session::{config::PersistentSession, storage::CookieSessionStore, Sess
 
 use crate::persistance::token::TokenState;
 use actix_web::cookie::time::Duration;
-use actix_web::cookie::Key;
+use actix_web::cookie::{Key, SameSite};
 
 use actix_web::web::Data;
 use actix_web::{middleware, web, App, HttpServer};
@@ -38,7 +38,7 @@ fn get_secret_key() -> Key {
     Key::generate()
 }
 
-const ONE_MINUTE: Duration = Duration::minutes(1);
+const ONE_HOUR: Duration = Duration::minutes(60);
 const USER_COOKIE_NAME: &str = "user_cookie";
 
 #[actix_web::main]
@@ -86,8 +86,9 @@ async fn main() -> std::io::Result<()> {
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
                     .cookie_name(USER_COOKIE_NAME.to_string())
+                    .cookie_same_site(SameSite::None)
                     .cookie_secure(false)
-                    .session_lifecycle(PersistentSession::default().session_ttl(ONE_MINUTE))
+                    .session_lifecycle(PersistentSession::default().session_ttl(ONE_HOUR))
                     .build(),
             )
             .wrap(middleware::NormalizePath::trim())

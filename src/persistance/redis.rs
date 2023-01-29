@@ -1,4 +1,5 @@
 use crate::errors::ServiceError;
+use crate::errors::ServiceError::InternalServerError;
 use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
 use crate::persistance::PersistMessage;
@@ -93,17 +94,17 @@ impl RedisDatabaseService {
         serde_json::from_str(&user_str).unwrap()
     }
 
-    pub async fn get_user_by_name(&mut self, username: &str) -> User {
+    pub async fn get_user_by_name(&mut self, username: &str) -> Result<User> {
         info!("get user by name {username}");
-        let result: RedisResult<Value> = self
+        let result: Value = self
             .connection
             .get(format!("user_usernames:{username}"))
-            .await;
-        let user_id: UserID = String::from_redis_value(&result.unwrap()).unwrap().into();
-        self.get_user_by_id(&user_id).await
+            .await?;
+        let user_id: UserID = String::from_redis_value(&result).unwrap().into();
+        Ok(self.get_user_by_id(&user_id).await)
     }
 
-    pub async fn get_user_by_name_index(&mut self, username: &str) {
+    pub async fn _get_user_by_name_index(&mut self, username: &str) {
         // Create index for username
         // FT.CREATE idx:username
         //   ON JSON

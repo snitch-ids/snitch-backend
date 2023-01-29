@@ -185,7 +185,7 @@ async fn test_add_user() {
 
     let x = db.add_user(&test_user).await;
     let x = db.get_user_by_id(&test_user.user_id).await;
-    let x = db.get_user_by_name(&test_user.username).await;
+    let x = db.get_user_by_name(&test_user.username).await.unwrap();
     assert_eq!(x.username, test_user.username);
     assert_eq!(x.user_id, test_user.user_id);
 }

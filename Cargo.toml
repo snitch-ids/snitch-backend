@@ -33,6 +33,7 @@ rand = "0.8.5"
 argonautica = "0.2.0"
 itertools = "0.10.5"
 redis-derive = "0.1.6"
+lettre = "0.10.1"
 
 [dependencies.uuid]
 version = "1.2.2"

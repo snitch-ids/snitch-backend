@@ -33,14 +33,14 @@ pub fn valid_hash(hash: &str, password: &str) -> Result<bool, Error> {
 pub fn test_hasher_valid() {
     let password = "password";
     let hash = hash_password(password);
-    assert!(valid_hash(&hash, password));
+    assert!(valid_hash(&hash, password).unwrap());
 }
 
 #[test]
 pub fn test_hasher_invalid() {
     let password = "password";
     let hash = hash_password(password);
-    assert_eq!(valid_hash(&hash, "password_false"), false);
+    assert_eq!(valid_hash(&hash, "password_false").unwrap(), false);
 }
 
 #[test]

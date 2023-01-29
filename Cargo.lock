@@ -3831,6 +3831,7 @@ dependencies = [
  "futures 0.3.25",
  "itertools",
  "jwt-compact",
+ "lettre",
  "log",
  "mongodb",
  "rand 0.8.5",

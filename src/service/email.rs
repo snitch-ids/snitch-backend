@@ -69,7 +69,7 @@ async fn test_email_client() {
     let test_recipient = "info@snitch.cool";
     let test_message = generate_registration_mail(
         "Bob",
-        "https://snitch.cool/register/isdjfolisjdflijs".into(),
+        &Url::parse("https://snitch.cool/register/isdjfolisjdflijs").unwrap(),
     );
     send_registration_mail(test_message, test_recipient.parse().unwrap())
         .await
@@ -80,6 +80,6 @@ async fn test_email_client() {
 fn test_render_email() {
     generate_registration_mail(
         &"liajsdfljasdlifj.sdlfijsdlfijsdlfijsldfjdfjdf@gmail.com".to_string(),
-        "https://snitch.cool/register/isdjfolisjdflijs".into(),
+        &Url::parse("https://snitch.cool/register/isdjfolisjdflijs").unwrap(),
     );
 }

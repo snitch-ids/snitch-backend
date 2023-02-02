@@ -1,14 +1,24 @@
+use crate::errors::ServiceError::InternalServerError;
 use lazy_static::lazy_static;
+use lettre::message::Mailbox;
 use lettre::transport::smtp::authentication::Mechanism;
 use lettre::transport::smtp::client::{Tls, TlsParameters};
-use lettre::{transport::smtp::authentication::Credentials, Message, SmtpTransport, Transport};
+use lettre::transport::smtp::response::Response;
+use lettre::{
+    transport::smtp::authentication::Credentials, Address, Message, SmtpTransport, Transport,
+};
 use log::{debug, warn};
+use reqwest::Url;
 use serde_json::value::{to_value, Value};
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use tera;
 use tera::{try_get_value, Context, Result, Tera};
+
+pub struct RegistrationMessage {
+    payload: String,
+}
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -19,32 +29,31 @@ lazy_static! {
                 ::std::process::exit(1);
             }
         };
+        tera.autoescape_on(vec!["*.html"]);
         tera
     };
 }
 
-fn generate_email(username: &str, activation_link: &str) -> String {
+pub fn generate_registration_mail(username: &str, activation_link: &Url) -> RegistrationMessage {
     let mut context = Context::new();
     context.insert("username", username);
-    context.insert("activation_link", activation_link);
+    context.insert("activation_link", &activation_link.to_string());
 
-    // A one off template
-    Tera::one_off("hello", &Context::new(), true).unwrap();
-
-    TEMPLATES.render("registration.html", &context).unwrap()
+    RegistrationMessage {
+        payload: TEMPLATES.render("registration.html", &context).unwrap(),
+    }
 }
 
-async fn send_registration_mail(message: String, receiver_address: &str) {
+pub async fn send_registration_mail(message: RegistrationMessage, receiver: Mailbox) -> Response {
     let smtp_user = env::var("SNITCH_SMTP_USER").expect("SNITCH_SMTP_USER not defined");
     let smtp_password = env::var("SNITCH_SMTP_PASSWORD").expect("SNITCH_SMTP_PASSWORD not defined");
     let smtp_server = env::var("SNITCH_SMTP_URL").expect("SNITCH_SMTP_URL not defined");
-
     let email = Message::builder()
         .from("mk@quakesaver.net".parse().unwrap())
         .reply_to("noreply@snitch.cool".parse().unwrap())
-        .to(receiver_address.parse().unwrap())
+        .to(receiver)
         .subject("Snitch User Registration")
-        .body(message)
+        .body(message.payload)
         .unwrap();
 
     let credentials = Credentials::new(smtp_user.to_string(), smtp_password.to_string());
@@ -54,21 +63,25 @@ async fn send_registration_mail(message: String, receiver_address: &str) {
         .authentication(vec![Mechanism::Login])
         .build();
 
-    match mailer.send(&email) {
-        Ok(_) => debug!("Email sent successfully"),
-        Err(e) => warn!("Could not send email: {:?}", e),
-    }
-    println!("done");
+    mailer
+        .send(&email)
+        .expect("failed sending registration mail")
 }
 
 #[tokio::test]
 async fn test_email_client() {
     let test_recipient = "info@snitch.cool";
-    let test_message = generate_email("Bob", "https://snitch.cool/register/isdjfolisjdflijs");
-    send_registration_mail(test_message, test_recipient).await
+    let test_message =
+        generate_registration_mail("Bob", "https://snitch.cool/register/isdjfolisjdflijs");
+    send_registration_mail(test_message, test_recipient.parse().unwrap())
+        .await
+        .unwrap();
 }
 
 #[test]
 fn test_render_email() {
-    generate_email("Bob", "https://snitch.cool/register/isdjfolisjdflijs");
+    generate_registration_mail(
+        &"liajsdfljasdlifj.sdlfijsdlfijsdlfijsldfjdfjdf@gmail.com".to_string(),
+        "https://snitch.cool/register/isdjfolisjdflijs",
+    );
 }

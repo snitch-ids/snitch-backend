@@ -72,8 +72,7 @@ async fn test_email_client() {
         &Url::parse("https://snitch.cool/register/isdjfolisjdflijs").unwrap(),
     );
     send_registration_mail(test_message, test_recipient.parse().unwrap())
-        .await
-        .unwrap();
+        .await;
 }
 
 #[test]

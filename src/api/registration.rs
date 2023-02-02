@@ -1,7 +1,7 @@
 use crate::api::AppStateWithCounter;
 
-use actix_web::post;
 use actix_web::web::Data;
+use actix_web::{post, HttpResponse};
 use actix_web::{web, Responder};
 
 use log::info;
@@ -20,6 +20,7 @@ use actix_web::get;
 use reqwest::Url;
 
 const REPLY_URL: &str = "http://localhost:8081/register";
+const FRONTEND_LOGIN_URL: &str = "http://127.0.0.1:8080/login";
 
 #[post("/register")]
 pub async fn register(
@@ -48,5 +49,7 @@ pub async fn register_reply(
     let nonce = nonce.into_inner();
     let mut users = state.messages.lock().await;
     users.confirm_user_pending(&nonce).await.unwrap();
-    "registered".to_string()
+    HttpResponse::Found()
+        .append_header(("Location", FRONTEND_LOGIN_URL))
+        .finish()
 }

@@ -6,9 +6,9 @@ use actix_web::error::ErrorUnauthorized;
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{error, get, post, web, HttpMessage, Responder};
-use actix_web_lab::__reexports::tracing::field::debug;
+
 use actix_web_lab::web::Redirect;
-use argonautica::Error;
+
 use log::debug;
 use serde::{Deserialize, Serialize};
 
@@ -35,11 +35,11 @@ pub async fn login(
     let user = users
         .get_user_by_name(username)
         .await
-        .map_err(|e| ErrorUnauthorized(e))?;
+        .map_err(ErrorUnauthorized)?;
     match valid_hash(&user.password_hash, &login_request.password) {
-        Ok(b) => {
+        Ok(_b) => {
             Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
-            Ok(format!("username"))
+            Ok("username".to_string())
         }
         Err(e) => {
             debug!("invalid username {username}",);

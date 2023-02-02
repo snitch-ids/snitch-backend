@@ -3,7 +3,7 @@ use crate::errors::ServiceError;
 use crate::errors::ServiceError::InternalServerError;
 use crate::model::user::{User, UserID};
 use crate::service::authentication::hash_password;
-use crate::{Deserialize, Serialize, TokenState};
+use crate::{Deserialize, Serialize};
 use actix_identity::Identity;
 use actix_web::{delete, get, post, web, Responder};
 use log::info;

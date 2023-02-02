@@ -1,12 +1,11 @@
 use derive_more::{Display, FromStr};
-use redis::{FromRedisValue, RedisResult, Value};
+
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-use std::ops::Deref;
 
 use crate::api::registration::RegistrationRequest;
 use crate::service::authentication::hash_password;
-use redis_derive::FromRedisValue;
+
 use uuid;
 use uuid::Uuid;
 

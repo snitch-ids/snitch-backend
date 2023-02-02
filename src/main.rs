@@ -10,7 +10,6 @@ mod service;
 
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
-use std::collections::HashMap;
 
 use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
 
@@ -19,7 +18,7 @@ use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, SameSite};
 
 use actix_web::web::Data;
-use actix_web::{middleware, web, App, HttpServer};
+use actix_web::{middleware, App, HttpServer};
 use api::{
     authentication::{index, login, logout},
     messages::{add_message, get_messages_by_hostname},
@@ -29,7 +28,7 @@ use api::{
     welcome, AppStateWithCounter,
 };
 
-use crate::api::registration::{register_reply, RegistrationRequest};
+use crate::api::registration::register_reply;
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;

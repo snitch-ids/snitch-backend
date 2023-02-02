@@ -1,7 +1,6 @@
 use crate::model::user::{User, UserID};
-use crate::service::authentication::{hash_password, valid_hash};
+use crate::service::authentication::hash_password;
 
-use log::info;
 use std::collections::HashMap;
 use std::fmt::Error;
 

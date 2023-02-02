@@ -1,14 +1,10 @@
 use crate::model::message::MessageToken;
 use crate::model::user::UserID;
-use rand::distributions::Alphanumeric;
-use rand::Rng;
 
 use std::collections::{HashMap, HashSet};
-use std::str::FromStr;
 
 use crate::service::token::random_alphanumeric_string;
 use tokio::sync::Mutex;
-use uuid::{uuid, Uuid};
 
 const TOKEN_LENGTH: u32 = 32;
 

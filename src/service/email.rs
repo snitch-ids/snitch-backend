@@ -1,20 +1,16 @@
-use crate::errors::ServiceError::InternalServerError;
 use lazy_static::lazy_static;
 use lettre::message::Mailbox;
 use lettre::transport::smtp::authentication::Mechanism;
-use lettre::transport::smtp::client::{Tls, TlsParameters};
+
 use lettre::transport::smtp::response::Response;
-use lettre::{
-    transport::smtp::authentication::Credentials, Address, Message, SmtpTransport, Transport,
-};
-use log::{debug, warn};
+use lettre::{transport::smtp::authentication::Credentials, Message, SmtpTransport, Transport};
+
 use reqwest::Url;
-use serde_json::value::{to_value, Value};
-use std::collections::HashMap;
+
 use std::env;
-use std::error::Error;
+
 use tera;
-use tera::{try_get_value, Context, Result, Tera};
+use tera::{Context, Tera};
 
 pub struct RegistrationMessage {
     payload: String,
@@ -25,7 +21,7 @@ lazy_static! {
         let mut tera = match Tera::new("src/service/templates/**/*") {
             Ok(t) => t,
             Err(e) => {
-                println!("Parsing error(s): {}", e);
+                println!("Parsing error(s): {e}");
                 ::std::process::exit(1);
             }
         };
@@ -56,8 +52,8 @@ pub async fn send_registration_mail(message: RegistrationMessage, receiver: Mail
         .body(message.payload)
         .unwrap();
 
-    let credentials = Credentials::new(smtp_user.to_string(), smtp_password.to_string());
-    let mailer = SmtpTransport::relay(&*smtp_server)
+    let credentials = Credentials::new(smtp_user, smtp_password);
+    let mailer = SmtpTransport::relay(&smtp_server)
         .unwrap()
         .credentials(credentials)
         .authentication(vec![Mechanism::Login])
@@ -71,8 +67,10 @@ pub async fn send_registration_mail(message: RegistrationMessage, receiver: Mail
 #[tokio::test]
 async fn test_email_client() {
     let test_recipient = "info@snitch.cool";
-    let test_message =
-        generate_registration_mail("Bob", "https://snitch.cool/register/isdjfolisjdflijs");
+    let test_message = generate_registration_mail(
+        "Bob",
+        "https://snitch.cool/register/isdjfolisjdflijs".into(),
+    );
     send_registration_mail(test_message, test_recipient.parse().unwrap())
         .await
         .unwrap();
@@ -82,6 +80,6 @@ async fn test_email_client() {
 fn test_render_email() {
     generate_registration_mail(
         &"liajsdfljasdlifj.sdlfijsdlfijsdlfijsldfjdfjdf@gmail.com".to_string(),
-        "https://snitch.cool/register/isdjfolisjdflijs",
+        "https://snitch.cool/register/isdjfolisjdflijs".into(),
     );
 }

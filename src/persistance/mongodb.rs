@@ -5,8 +5,7 @@ use mongodb::{bson::doc, options::FindOptions};
 use mongodb::{options::ClientOptions, Client};
 
 use crate::model::message::MessageBackend;
-use crate::model::user::User;
-use crate::persistance::redis::RedisDatabaseService;
+
 use crate::persistance::PersistMessage;
 
 pub struct MongoDatabaseService {

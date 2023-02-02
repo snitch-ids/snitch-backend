@@ -1,20 +1,16 @@
-use crate::errors::ServiceError;
-use crate::errors::ServiceError::InternalServerError;
 use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
 use crate::persistance::PersistMessage;
 use anyhow::{Ok, Result};
 use async_trait::async_trait;
-use itertools::Itertools;
+
 use log::info;
+use redis::aio;
 use redis::Commands;
 use redis::JsonAsyncCommands;
-use redis::{aio, RedisResult};
 use redis::{AsyncCommands, FromRedisValue, Value};
 use serde::Serialize;
 use serde_json::json;
-use std::env::var;
-use std::fmt::{format, Error};
 
 pub struct RedisDatabaseService {
     pub client: redis::Client,
@@ -22,7 +18,7 @@ pub struct RedisDatabaseService {
 }
 
 #[derive(Serialize)]
-struct EMPTY {}
+struct Empty {}
 
 impl RedisDatabaseService {
     pub async fn new(url: &str) -> Result<Self> {
@@ -48,7 +44,7 @@ impl RedisDatabaseService {
             .json_set(format!("user:{user_id}"), "$", &json!(user))
             .await
             .unwrap();
-        self.add_user_index(&user).await;
+        self.add_user_index(user).await;
     }
 
     pub async fn add_user_pending(&mut self, user: &User, nonce: &Nonce) {
@@ -60,9 +56,9 @@ impl RedisDatabaseService {
     }
 
     pub async fn confirm_user_pending(&mut self, nonce: &Nonce) -> Result<()> {
-        let user = self.get_user_pending(&nonce).await;
+        let user = self.get_user_pending(nonce).await;
         self.add_user(&user).await;
-        self.delete_user_pending(&nonce).await;
+        self.delete_user_pending(nonce).await;
         info!("confirmed {}", user);
         Ok(())
     }
@@ -104,7 +100,7 @@ impl RedisDatabaseService {
         Ok(self.get_user_by_id(&user_id).await)
     }
 
-    pub async fn _get_user_by_name_index(&mut self, username: &str) {
+    pub async fn _get_user_by_name_index(&mut self, _username: &str) {
         // Create index for username
         // FT.CREATE idx:username
         //   ON JSON

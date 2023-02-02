@@ -2,7 +2,7 @@ use crate::errors::ServiceError;
 use crate::model::user::UserID;
 use crate::persistance::token::TokenState;
 use actix_identity::Identity;
-use actix_web::{delete, get, web, Responder};
+use actix_web::{get, web, Responder};
 use log::info;
 
 #[get("/token/new")]

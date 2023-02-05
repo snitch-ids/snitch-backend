@@ -18,12 +18,14 @@ impl TokenStore {
         let mut token_store = Self::default();
 
         #[cfg(debug_assertions)] // insert debug token for development
-        let id = UserID::new();
-        token_store
-            .tokens
-            .entry(id)
-            .or_default()
-            .insert("!!!INSECUREADMINTOKEN!!!".to_string());
+        {
+            let id = UserID::new();
+            token_store
+                .tokens
+                .entry(id)
+                .or_default()
+                .insert("!!!INSECUREADMINTOKEN!!!".to_string());
+        }
 
         token_store
     }

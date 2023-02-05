@@ -33,6 +33,7 @@ impl Users {
         Ok(user.clone())
     }
 
+    #[allow(dead_code)]
     pub fn get_user_by_name(&self, username: &str) -> Option<&User> {
         let users = self
             .users
@@ -46,8 +47,9 @@ impl Users {
         }
     }
 
+    #[allow(dead_code)]
     pub fn example() -> Self {
-        let test_user = User::new("testuser".to_string(), hash_password("grr"));
+        let test_user = User::new("xx".to_string(), hash_password("xx"));
         let mut users = Users {
             users: Default::default(),
         };

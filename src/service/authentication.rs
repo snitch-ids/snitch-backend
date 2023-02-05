@@ -40,7 +40,7 @@ pub fn test_hasher_valid() {
 pub fn test_hasher_invalid() {
     let password = "password";
     let hash = hash_password(password);
-    assert_eq!(valid_hash(&hash, "password_false").unwrap(), false);
+    assert!(valid_hash(&hash, "password_false").unwrap());
 }
 
 #[test]

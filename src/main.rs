@@ -43,11 +43,6 @@ const USER_COOKIE_NAME: &str = "user_cookie";
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-
-    // let db_service = MongoDatabaseService::new("mongodb://root:kdjie234!@localhost:27017")
-    //     .await
-    //     .expect("failed to create monogdb service");
-
     let db_service = RedisDatabaseService::new("redis://localhost:6379")
         .await
         .expect("failed to create redis service");
@@ -56,6 +51,7 @@ async fn main() -> std::io::Result<()> {
         users: Mutex::new(Users::example()),
         messages: Mutex::new(db_service),
     });
+
     let state_token = Data::new(TokenState::new());
 
     let port = 8081;

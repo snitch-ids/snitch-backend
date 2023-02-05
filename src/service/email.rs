@@ -77,7 +77,7 @@ async fn test_email_client() {
 #[test]
 fn test_render_email() {
     generate_registration_mail(
-        &"liajsdfljasdlifj.sdlfijsdlfijsdlfijsldfjdfjdf@gmail.com".to_string(),
+        "liajsdfljasdlifj.sdlfijsdlfijsdlfijsldfjdfjdf@gmail.com",
         &Url::parse("https://snitch.cool/register/isdjfolisjdflijs").unwrap(),
     );
 }

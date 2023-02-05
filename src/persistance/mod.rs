@@ -1,4 +1,3 @@
-pub mod mongodb;
 pub mod redis;
 pub mod token;
 pub mod users;

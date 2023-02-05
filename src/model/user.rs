@@ -66,6 +66,7 @@ impl User {
         }
     }
 
+    #[allow(dead_code)]
     pub fn example() -> Self {
         Self::new("Peter".to_string(), "asdfasdfasdf".to_string())
     }

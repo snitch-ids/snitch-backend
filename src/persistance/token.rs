@@ -80,5 +80,5 @@ fn test_store_has_token() {
     let user_id = UserID::new();
     let token = store.create_token_for_user_id(&user_id);
     assert!(store.has_token(token));
-    assert_eq!(store.has_token("NONEXISTENDTOKEN".to_string()), false);
+    assert!(store.has_token("NONEXISTENDTOKEN".to_string()));
 }

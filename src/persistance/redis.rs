@@ -6,7 +6,6 @@ use async_trait::async_trait;
 
 use log::info;
 use redis::aio;
-use redis::Commands;
 use redis::JsonAsyncCommands;
 use redis::{AsyncCommands, FromRedisValue, Value};
 use serde::Serialize;
@@ -179,8 +178,8 @@ async fn test_add_user() {
         .await
         .unwrap();
 
-    let x = db.add_user(&test_user).await;
-    let x = db.get_user_by_id(&test_user.user_id).await;
+    db.add_user(&test_user).await;
+    let _x = db.get_user_by_id(&test_user.user_id).await;
     let x = db.get_user_by_name(&test_user.username).await.unwrap();
     assert_eq!(x.username, test_user.username);
     assert_eq!(x.user_id, test_user.user_id);

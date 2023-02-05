@@ -7,5 +7,5 @@ RUN cargo build --release
 
 FROM alpine:latest AS RUNNER
 WORKDIR snitch-backend
-COPY --from=BUILDER /snitch-backend/build/debug/snitch-backend ./
+COPY --from=BUILDER /snitch-backend/target/release/snitch-backend ./
 CMD ./snitch-backend

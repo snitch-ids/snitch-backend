@@ -1,4 +1,4 @@
 *.env
 .git
-.target
+target
 .idea

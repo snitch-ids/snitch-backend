@@ -28,6 +28,7 @@ use api::{
 use crate::api::registration::register_reply;
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
+use std;
 use tokio::sync::Mutex;
 
 fn get_secret_key() -> Key {
@@ -40,7 +41,8 @@ const USER_COOKIE_NAME: &str = "user_cookie";
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    let db_service = RedisDatabaseService::new("redis://localhost:6379")
+    let redis_url = std::env::var("SNITCH_REDIS_URL").unwrap();
+    let db_service = RedisDatabaseService::new(&redis_url)
         .await
         .expect("failed to create redis service");
 

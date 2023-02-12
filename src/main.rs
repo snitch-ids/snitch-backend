@@ -44,7 +44,7 @@ async fn main() -> std::io::Result<()> {
     let redis_url = std::env::var("SNITCH_REDIS_URL").unwrap();
     let db_service = RedisDatabaseService::new(&redis_url)
         .await
-        .expect("failed to create redis service");
+        .expect(&*format!("failed to create redis service at {redis_url}"));
 
     let state = Data::new(AppStateWithCounter {
         users: Mutex::new(Users::example()),
@@ -79,6 +79,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(IdentityMiddleware::default())
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
+                    .cookie_http_only(false)
+                    .cookie_domain(None)
                     .cookie_name(USER_COOKIE_NAME.to_string())
                     .cookie_same_site(SameSite::None)
                     .cookie_secure(false)

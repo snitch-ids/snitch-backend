@@ -1,2 +1,2 @@
 /target
-production.env
+*.env

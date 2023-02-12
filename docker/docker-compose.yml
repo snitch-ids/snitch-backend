@@ -8,6 +8,8 @@ services:
       - "8081:8081"
     depends_on:
       - redis-stack
+    env_file:
+      - ../production-docker.env
 
   redis-stack:
     image: redis/redis-stack

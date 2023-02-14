@@ -29,6 +29,9 @@ use crate::api::registration::register_reply;
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use std;
+use std::os::unix::raw::ino_t;
+use actix_web_lab::__reexports::tracing::field::debug;
+use log::info;
 use tokio::sync::Mutex;
 
 fn get_secret_key() -> Key {
@@ -92,7 +95,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(state.clone())
             .app_data(state_token.clone())
     })
-    .bind(("localhost", port))?
+    .bind(("0.0.0.0", port))?
     .run()
     .await
 }

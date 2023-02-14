@@ -95,7 +95,7 @@ impl RedisDatabaseService {
             .connection
             .get(format!("user_usernames:{username}"))
             .await?;
-        let user_id: UserID = String::from_redis_value(&result).unwrap().into();
+        let user_id: UserID = String::from_redis_value(&result).unwrap_or_default().into();
         Ok(self.get_user_by_id(&user_id).await)
     }
 

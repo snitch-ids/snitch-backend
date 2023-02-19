@@ -3,7 +3,10 @@ name = "snitch-backend"
 version = "0.1.0"
 edition = "2021"
 include = ["/src/service/templates/*.html"]
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "snitch-backend"
+path = "/src/main.rs"
 
 [dependencies]
 actix = "0.13.0"

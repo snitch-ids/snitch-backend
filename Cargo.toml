@@ -8,7 +8,6 @@ include = ["/src/service/templates/*.html"]
 name = "snitch-backend"
 
 [dependencies]
-actix = "0.13.0"
 actix-web = "4.1.0"
 actix-web-lab = "0.18.9"
 actix-identity = "0.5.2"

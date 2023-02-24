@@ -2,26 +2,42 @@
 name = "snitch-backend"
 version = "0.1.0"
 edition = "2021"
+include = ["/src/service/templates/*.html"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "snitch-backend"
 
 [dependencies]
 actix = "0.13.0"
 actix-web = "4.1.0"
-tokio = "*"
+actix-web-lab = "0.18.9"
+actix-identity = "0.5.2"
+actix-session = {version="0.7.2", features=["redis-rs-session", "cookie-session"]}
+actix-web-httpauth = "0.8.0"
+actix-cors = "0.6.2"
+tokio = { version = "1", features = ["full"] }
 serde = {version = "*", features=["derive"]}
 serde_json = "*"
-actix-web-httpauth = { git = "https://github.com/actix/actix-web-httpauth" }
 derive_more = "0.99.17"
-alcoholic_jwt = "4091.0.0"
 reqwest = "0.11.11"
-mongodb = "2.3.0"
 anyhow = "1.0"
 futures = "0.3.21"
-actix-cors = "0.6.2"
 env_logger = "0.9.0"
 log = "0.4.17"
 chrono = {version="0.4.21", features=["serde"]}
-snitch = {path="../snitch"}
 async-trait = "0.1.57"
-redis = {version="0.21.5", features=["tokio-comp", "streams"]}
+redis = {version= "0.22.3", features=["tokio-comp", "streams", "json"]}
+rand = "0.8.5"
+argonautica = "0.2.0"
+itertools = "0.10.5"
+lettre = {version="0.10.2", features=["smtp-transport"]}
+tera = "1.17.1"
+lazy_static = "1.4.0"
+
+[dependencies.uuid]
+version = "1.2.2"
+features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]

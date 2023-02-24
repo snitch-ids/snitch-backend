@@ -1,6 +1,3 @@
-#[derive(Debug)]
-pub struct SnitchError {}
-
 use actix_web::{error::ResponseError, HttpResponse};
 use derive_more::Display;
 
@@ -9,11 +6,8 @@ pub enum ServiceError {
     #[display(fmt = "Internal Server Error")]
     InternalServerError,
 
-    #[display(fmt = "BadRequest: {}", _0)]
+    #[display(fmt = "BadRequest: {_0}")]
     BadRequest(String),
-
-    #[display(fmt = "JWKSFetchError")]
-    JWKSFetchError,
 }
 
 // impl ResponseError trait allows to convert our errors into http responses with appropriate data
@@ -24,9 +18,6 @@ impl ResponseError for ServiceError {
                 HttpResponse::InternalServerError().json("Internal Server Error, Please try later")
             }
             ServiceError::BadRequest(ref message) => HttpResponse::BadRequest().json(message),
-            ServiceError::JWKSFetchError => {
-                HttpResponse::InternalServerError().json("Could not fetch JWKS")
-            }
         }
     }
 }

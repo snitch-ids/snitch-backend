@@ -20,7 +20,12 @@ pub struct RedisDatabaseService {
 struct Empty {}
 
 impl RedisDatabaseService {
-    pub async fn new(url: &str) -> Result<Self> {
+    pub async fn new() -> Result<Self> {
+        let url = std::env::var("SNITCH_REDIS_URL").expect("SNITCH_REDIS_URL not defined");
+        info!("connecting to redis {}", url);
+
+        let password = std::env::var("SNITCH_REDIS_PASSWORD").expect("SNITCH_REDIS_URL not defined");
+        let url = format!("redis://:{}@{}", password, url);
         let client = redis::Client::open(url)?;
         let connection = client.get_async_connection().await?;
         Ok(RedisDatabaseService { client, connection })

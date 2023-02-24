@@ -6,7 +6,6 @@ include = ["/src/service/templates/*.html"]
 
 [[bin]]
 name = "snitch-backend"
-path = "/src/main.rs"
 
 [dependencies]
 actix = "0.13.0"

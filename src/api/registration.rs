@@ -1,4 +1,5 @@
 use crate::api::AppStateWithCounter;
+use std::env;
 
 use actix_web::web::Data;
 use actix_web::{post, HttpResponse};
@@ -19,9 +20,6 @@ use crate::service::token::random_alphanumeric_string;
 use actix_web::get;
 use reqwest::Url;
 
-const REPLY_URL: &str = "http://localhost:8081/register";
-const FRONTEND_LOGIN_URL: &str = "http://127.0.0.1:8080/login";
-
 #[post("/register")]
 pub async fn register(
     register_request: web::Json<RegistrationRequest>,
@@ -33,8 +31,8 @@ pub async fn register(
     let user_request = register_request.into_inner();
     let user = User::from(user_request);
     users.add_user_pending(&user, &nonce).await;
-
-    let activation_link = Url::parse(&format!("{REPLY_URL}/{nonce}")).unwrap();
+    let reply_url = env::var("SNITCH_BACKEND_URL").expect("SNITCH_BACKEND_URL undefined");
+    let activation_link = Url::parse(&format!("{reply_url}/register/{nonce}")).unwrap();
     let mail = generate_registration_mail("", &activation_link);
     let receiver = user.username.parse().unwrap();
     send_registration_mail(mail, receiver).await;
@@ -49,7 +47,9 @@ pub async fn register_reply(
     let nonce = nonce.into_inner();
     let mut users = state.messages.lock().await;
     users.confirm_user_pending(&nonce).await.unwrap();
+    let reply_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
+
     HttpResponse::Found()
-        .append_header(("Location", FRONTEND_LOGIN_URL))
+        .append_header(("Location", reply_url))
         .finish()
 }

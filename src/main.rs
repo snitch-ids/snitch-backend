@@ -26,7 +26,6 @@ use api::{
 };
 
 use crate::api::registration::register_reply;
-use actix_web_lab::__reexports::tracing::debug;
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use std;

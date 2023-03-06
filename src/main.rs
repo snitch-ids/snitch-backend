@@ -26,6 +26,7 @@ use api::{
 };
 
 use crate::api::registration::register_reply;
+use actix_web_lab::__reexports::tracing::debug;
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 use std;
@@ -40,8 +41,10 @@ const USER_COOKIE_NAME: &str = "user_cookie";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let env_file = std::env::args().nth(1).expect("No .env filename provided");
-    dotenv::from_filename(env_file).expect("failed parsing dotenv file");
+    if let Some(filename) = std::env::args().nth(1) {
+        dotenv::from_filename(filename).expect("failed parsing dotenv file");
+    };
+
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     let db_service = RedisDatabaseService::new()
         .await

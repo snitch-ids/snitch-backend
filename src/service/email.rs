@@ -25,6 +25,10 @@ lazy_static! {
                 ::std::process::exit(1);
             }
         };
+
+        let raw_template = include_str!("templates/registration.html");
+        tera.add_raw_template("registration.html", raw_template)
+            .expect("failed adding template");
         tera.autoescape_on(vec!["*.html"]);
         tera
     };

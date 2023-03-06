@@ -7,8 +7,8 @@ cd docker
 docker-compose up
 ```
 
-## run the backend (debug)
+## run the backend (debug) and provide the dotenv file as input.
 
 ```shell
-RUST_LOG=DEBUG cargo run
+RUST_BACKTRACE=1 RUST_LOG=debug  cargo run -- local-dev.env
 ```

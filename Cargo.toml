@@ -32,6 +32,7 @@ itertools = "0.10.5"
 lettre = {version="0.10.2", features=["smtp-transport"]}
 tera = "1.17.1"
 lazy_static = "1.4.0"
+dotenv = "0.15.0"
 
 [dependencies.uuid]
 version = "1.2.2"

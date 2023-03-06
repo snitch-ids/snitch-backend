@@ -4,9 +4,9 @@ mod intentory;
 mod model;
 mod persistance;
 mod service;
-
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
+use dotenv;
 
 use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
 
@@ -40,6 +40,8 @@ const USER_COOKIE_NAME: &str = "user_cookie";
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let env_file = std::env::args().nth(1).expect("No .env filename provided");
+    dotenv::from_filename(env_file).expect("failed parsing dotenv file");
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     let db_service = RedisDatabaseService::new()
         .await

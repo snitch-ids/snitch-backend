@@ -4,7 +4,7 @@ use crate::persistance::PersistMessage;
 use anyhow::{Ok, Result};
 use async_trait::async_trait;
 
-use log::info;
+use log::{debug, info};
 use redis::aio;
 use redis::JsonAsyncCommands;
 use redis::{AsyncCommands, FromRedisValue, Value};
@@ -24,8 +24,10 @@ impl RedisDatabaseService {
         let url = std::env::var("SNITCH_REDIS_URL").expect("SNITCH_REDIS_URL not defined");
         info!("connecting to redis {}", url);
 
-        let password = std::env::var("SNITCH_REDIS_PASSWORD").expect("SNITCH_REDIS_URL not defined");
+        let password =
+            std::env::var("SNITCH_REDIS_PASSWORD").expect("SNITCH_REDIS_PASSWORD not defined");
         let url = format!("redis://:{}@{}", password, url);
+        debug!("connecting to {url}");
         let client = redis::Client::open(url)?;
         let connection = client.get_async_connection().await?;
         Ok(RedisDatabaseService { client, connection })
@@ -179,9 +181,7 @@ async fn test_add_user() {
     use crate::model::user::User;
     let mut test_user = User::example();
     test_user.username = "xxxx".to_string();
-    let mut db = RedisDatabaseService::new("redis://127.0.0.1:6379")
-        .await
-        .unwrap();
+    let mut db = RedisDatabaseService::new().await.unwrap();
 
     db.add_user(&test_user).await;
     let _x = db.get_user_by_id(&test_user.user_id).await;

@@ -22,7 +22,7 @@ struct MessageResponse {
     messages: Vec<MessageBackend>,
 }
 
-#[post("/messages/")]
+#[post("/messages")]
 pub(crate) async fn add_message(
     auth: BearerAuth,
     message: web::Json<MessageBackend>,

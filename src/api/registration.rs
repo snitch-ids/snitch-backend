@@ -23,7 +23,7 @@ use reqwest::Url;
 #[post("/register")]
 pub async fn register(
     register_request: web::Json<RegistrationRequest>,
-    state: web::Data<AppStateWithCounter>,
+    state: Data<AppStateWithCounter>,
 ) -> String {
     info!("register");
     let nonce = random_alphanumeric_string(40);
@@ -31,8 +31,9 @@ pub async fn register(
     let user_request = register_request.into_inner();
     let user = User::from(user_request);
     users.add_user_pending(&user, &nonce).await;
-    let reply_url = env::var("SNITCH_BACKEND_URL").expect("SNITCH_BACKEND_URL undefined");
-    let activation_link = Url::parse(&format!("{reply_url}/register/{nonce}")).unwrap();
+    let backend_url = env::var("SNITCH_BACKEND_URL").expect("SNITCH_BACKEND_URL not defined");
+
+    let activation_link = Url::parse(&format!("{backend_url}/register/{nonce}")).unwrap();
     let mail = generate_registration_mail("", &activation_link);
     let receiver = user.username.parse().unwrap();
     send_registration_mail(mail, receiver).await;

@@ -65,12 +65,12 @@ async fn main() -> std::io::Result<()> {
         let cors = Cors::permissive();
         App::new()
             .wrap(cors)
+            .service(add_message)
             .service(register)
             .service(register_reply)
             .service(login)
             .service(logout)
             .service(index)
-            .service(add_message)
             .service(welcome)
             .service(get_messages_by_hostname) // for testing no auth
             .service(add_user)

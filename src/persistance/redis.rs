@@ -1,6 +1,6 @@
 use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
-use crate::persistance::PersistMessage;
+use crate::persistance::{MessageKey, PersistMessage};
 use anyhow::{Ok, Result};
 use async_trait::async_trait;
 
@@ -15,6 +15,8 @@ pub struct RedisDatabaseService {
     pub client: redis::Client,
     pub connection: aio::Connection,
 }
+
+const MAX_MESSAGES: isize = 1000;
 
 #[derive(Serialize)]
 struct Empty {}
@@ -51,6 +53,14 @@ impl RedisDatabaseService {
             .await
             .unwrap();
         self.add_user_index(user).await;
+    }
+
+    pub async fn delete_user(&mut self, user_id: &UserID) {
+        let _: () = self
+            .connection
+            .json_del(format!("user:{user_id}"), ".")
+            .await
+            .unwrap();
     }
 
     pub async fn add_user_pending(&mut self, user: &User, nonce: &Nonce) {
@@ -154,11 +164,11 @@ impl RedisDatabaseService {
 
 #[async_trait]
 impl PersistMessage for RedisDatabaseService {
-    async fn add_message(&mut self, message: &MessageBackend) -> Result<()> {
-        info!("storing in database: {:?}", message);
+    async fn add_message(&mut self, key: &MessageKey, message: &MessageBackend) -> Result<()> {
+        println!("storing in database: {:?}", message);
         let _: () = self
             .connection
-            .rpush(&message.hostname, message)
+            .rpush(key.to_redis_key(), message)
             .await
             .unwrap();
         info!("storing in database: {:?}... finished", message);
@@ -166,8 +176,11 @@ impl PersistMessage for RedisDatabaseService {
         Ok(())
     }
 
-    async fn find_messages(&mut self, hostname: &str) -> Result<Vec<MessageBackend>> {
-        let responses: Vec<String> = self.connection.lrange(hostname, 0, -2).await?;
+    async fn find_messages(&mut self, key: &MessageKey) -> Result<Vec<MessageBackend>> {
+        let responses: Vec<String> = self
+            .connection
+            .lrange(key.to_redis_key(), 0, MAX_MESSAGES)
+            .await?;
         let messages = responses
             .iter()
             .map(|response| serde_json::from_str(response).unwrap())
@@ -177,7 +190,7 @@ impl PersistMessage for RedisDatabaseService {
 }
 
 #[tokio::test]
-async fn test_add_user() {
+async fn test_add_delete_user() {
     use crate::model::user::User;
     let mut test_user = User::example();
     test_user.username = "xxxx".to_string();
@@ -188,4 +201,27 @@ async fn test_add_user() {
     let x = db.get_user_by_name(&test_user.username).await.unwrap();
     assert_eq!(x.username, test_user.username);
     assert_eq!(x.user_id, test_user.user_id);
+
+    db.delete_user(&test_user.user_id).await;
+    // Test this to improve error handling
+    // assert_eq!(db.get_user_by_name(&test_user.username).await.ok(), None);
+}
+
+#[tokio::test]
+async fn test_add_messages() {
+    use crate::model::user::User;
+    let mut test_user = User::example();
+    test_user.username = "asdf".to_string();
+    let mut db = RedisDatabaseService::new().await.unwrap();
+    let mut test_message = MessageBackend::default();
+    test_message.hostname = "testhostname".into();
+    db.add_user(&test_user).await;
+
+    let key = MessageKey {
+        user_id: test_user.user_id.clone(),
+        hostname: test_message.hostname.clone(),
+    };
+    db.add_message(&key, &test_message).await.unwrap();
+    assert_eq!(db.find_messages(&key).await.unwrap().len(), 1);
+    db.delete_user(&test_user.user_id).await;
 }

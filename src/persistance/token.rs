@@ -42,9 +42,19 @@ impl TokenStore {
         self.tokens.get(user_id)
     }
 
-    pub fn has_token(&self, token: MessageToken) -> bool {
+    pub fn get_user_id_of_token(&self, token: &MessageToken) -> Option<&UserID> {
+        for (user_id, tokens) in self.tokens.iter() {
+            if tokens.contains(token) {
+                return Some(user_id);
+            }
+        }
+
+        None
+    }
+
+    pub fn has_token(&self, token: &MessageToken) -> bool {
         for x in self.tokens.values() {
-            let value = x.contains(&*token);
+            let value = x.contains(token);
             if value {
                 return true;
             }
@@ -81,6 +91,15 @@ fn test_store_has_token() {
     let mut store = TokenStore::default();
     let user_id = UserID::new();
     let token = store.create_token_for_user_id(&user_id);
-    assert!(store.has_token(token));
-    assert!(store.has_token("NONEXISTENDTOKEN".to_string()));
+    assert!(store.has_token(&token));
+    assert!(!store.has_token(&"NONEXISTENDTOKEN".to_string()));
+}
+
+#[test]
+fn test_user_id_of_token() {
+    let mut store = TokenStore::default();
+    let user_id = UserID::new();
+    store.create_token_for_user_id(&user_id);
+    let token = store.create_token_for_user_id(&user_id);
+    assert_eq!(&user_id, store.get_user_id_of_token(&token).unwrap());
 }

@@ -12,3 +12,11 @@ docker-compose up
 ```shell
 RUST_BACKTRACE=1 RUST_LOG=debug  cargo run -- local-dev.env
 ```
+
+## Prune redis database
+
+e.g. for testing
+
+```shell
+redis-cli flushall
+```

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 pub type MessageToken = String;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct MessageBackend {
     pub hostname: String,
     pub title: String,

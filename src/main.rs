@@ -6,7 +6,7 @@ mod persistance;
 mod service;
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
-use dotenv;
+
 
 use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
 
@@ -28,7 +28,7 @@ use api::{
 use crate::api::registration::register_reply;
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
-use std;
+
 use tokio::sync::Mutex;
 
 fn get_secret_key() -> Key {
@@ -47,7 +47,7 @@ async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     let db_service = RedisDatabaseService::new()
         .await
-        .expect(&*format!("failed to create redis service"));
+        .expect("failed to create redis service");
 
     let state = Data::new(AppStateWithCounter {
         users: Mutex::new(Users::example()),

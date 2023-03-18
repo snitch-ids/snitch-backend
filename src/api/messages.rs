@@ -1,14 +1,16 @@
 use crate::api::AppStateWithCounter;
 use crate::model::message::{MessageBackend, MessageToken};
-use crate::persistance::PersistMessage;
+use crate::persistance::{MessageKey, PersistMessage};
 use actix_identity::Identity;
 use actix_web::{post, web, Responder};
 
 use crate::errors::ServiceError;
 
+use crate::model::user::UserID;
 use crate::TokenState;
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use log::info;
+
+use log::{info};
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -32,29 +34,46 @@ pub(crate) async fn add_message(
     let token_store = token_state.token.lock().await;
     let token: MessageToken = auth.token().trim().to_string();
 
-    if !token_store.has_token(token) {
+    if !token_store.has_token(&token) {
         return Err(ServiceError::BadRequest("invalid token".to_string()));
     }
     let obj = message.into_inner();
     let mut message_db = state.messages.lock().await;
-    message_db
-        .add_message(&obj)
-        .await
-        .expect("failed adding message");
+    match token_store.get_user_id_of_token(&token) {
+        None => {
+            info!("no user id of token {token}")
+        }
+        Some(user_id) => {
+            let key = MessageKey {
+                user_id: user_id.clone(),
+                hostname: obj.hostname.clone(),
+            };
+            message_db
+                .add_message(&key, &obj)
+                .await
+                .expect("failed adding message");
+        }
+    }
+
     Ok("success".to_string())
 }
 
 #[post("/messages/all")]
 pub(crate) async fn get_messages_by_hostname(
-    _identity: Identity,
+    identity: Identity,
     info: web::Json<MessageRequest>,
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, ServiceError> {
     let _messages: Vec<MessageBackend> = vec![];
     info!("received request for {}", &info.hostname);
     let mut messages_state = state.messages.lock().await;
+    let user_id: UserID = identity.id().unwrap().into();
+    let key = MessageKey {
+        user_id,
+        hostname: info.hostname.clone(),
+    };
     let messages: Vec<MessageBackend> = messages_state
-        .find_messages(&info.hostname)
+        .find_messages(&key)
         .await
         .map_err(|_| ServiceError::InternalServerError)?;
     info!("returning {} objects ", messages.len());

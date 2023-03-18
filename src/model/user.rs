@@ -25,6 +25,12 @@ impl UserID {
     }
 }
 
+impl Default for UserID {
+    fn default() -> Self {
+        UserID(Uuid::default().to_string())
+    }
+}
+
 impl From<String> for UserID {
     fn from(value: String) -> Self {
         UserID(value)
@@ -49,7 +55,7 @@ impl From<String> for UserID {
 //     }
 // }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct User {
     pub user_id: UserID,
     pub username: String,

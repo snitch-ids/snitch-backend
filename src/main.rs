@@ -7,7 +7,6 @@ mod service;
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
 
-
 use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
 
 use crate::persistance::token::TokenState;
@@ -29,6 +28,7 @@ use crate::api::registration::register_reply;
 use persistance::{redis::RedisDatabaseService, users::Users};
 use serde::{Deserialize, Serialize};
 
+use crate::api::messages::get_message_hostnames;
 use tokio::sync::Mutex;
 
 fn get_secret_key() -> Key {
@@ -73,6 +73,7 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(welcome)
             .service(get_messages_by_hostname) // for testing no auth
+            .service(get_message_hostnames) // for testing no auth
             .service(add_user)
             .service(get_user_by_id)
             .service(get_users)

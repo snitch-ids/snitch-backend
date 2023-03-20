@@ -3,11 +3,11 @@ pub mod token;
 pub mod users;
 
 use crate::model::message::MessageBackend;
-use crate::model::user::{UserID};
+use crate::model::user::UserID;
+use std::format;
 
 use anyhow::Result;
 use async_trait::async_trait;
-
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct MessageKey {
@@ -26,7 +26,7 @@ impl Default for MessageKey {
 
 impl MessageKey {
     fn to_redis_key(&self) -> String {
-        format!("messages:{}:{}:", self.user_id, self.hostname)
+        format!("messages:{}:{}", self.user_id, self.hostname)
     }
 }
 
@@ -39,4 +39,5 @@ pub trait PersistMessage {
     ) -> Result<()>;
 
     async fn find_messages(&mut self, message_key: &MessageKey) -> Result<Vec<MessageBackend>>;
+    async fn get_hostnames_of_user(&mut self, user_id: &UserID) -> Result<Vec<String>>;
 }

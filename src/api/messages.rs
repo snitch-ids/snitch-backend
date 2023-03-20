@@ -10,7 +10,7 @@ use crate::model::user::UserID;
 use crate::TokenState;
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 
-use log::{info};
+use log::info;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -58,13 +58,28 @@ pub(crate) async fn add_message(
     Ok("success".to_string())
 }
 
+#[post("/messages/hostnames")]
+pub(crate) async fn get_message_hostnames(
+    identity: Identity,
+    state: web::Data<AppStateWithCounter>,
+) -> Result<impl Responder, ServiceError> {
+    let mut messages_state = state.messages.lock().await;
+    let user_id: UserID = identity.id().unwrap().into();
+
+    let hostnames: Vec<String> = messages_state
+        .get_hostnames_of_user(&user_id)
+        .await
+        .map_err(|_| ServiceError::InternalServerError)?;
+    info!("returning {} objects ", hostnames.len());
+    Ok(web::Json(hostnames))
+}
+
 #[post("/messages/all")]
 pub(crate) async fn get_messages_by_hostname(
     identity: Identity,
     info: web::Json<MessageRequest>,
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, ServiceError> {
-    let _messages: Vec<MessageBackend> = vec![];
     info!("received request for {}", &info.hostname);
     let mut messages_state = state.messages.lock().await;
     let user_id: UserID = identity.id().unwrap().into();

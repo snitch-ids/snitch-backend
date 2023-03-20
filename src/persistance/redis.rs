@@ -116,50 +116,49 @@ impl RedisDatabaseService {
         Ok(self.get_user_by_id(&user_id).await)
     }
 
-    pub async fn _get_user_by_name_index(&mut self, _username: &str) {
-        // Create index for username
-        // FT.CREATE idx:username
-        //   ON JSON
-        //   PREFIX 1 "user:"
-        //   SCHEMA $.username AS username TEXT
-        //
-        // Then search with
-        // FT.SEARCH idx:username_pending "1"
-        // redis returned list of key-value pairs
-        // key: user:b545cc19-169a-425f-8f97-3cff9d6237fc
-        // value: {\"user_id\":\"b545cc19-169a-425f-8f97-3cff9d6237fc\",\"username\":\"1\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$n9HwKN4bu7cUCojo08Tx8ke9Lr0gUBSqQrfE7h67oKE$LDeeOCtslWxiCEQdxx4xAUFsyzczlhC+FX1C/rwcoqk\"}
-        // key: user:b545cc19-169a-425f-8f97-3cff9d6237fc
-        // value: {\"user_id\":\"b545cc19-169a-425f-8f97-3cff9d6237fc\",\"username\":\"1\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$n9HwKN4bu7cUCojo08Tx8ke9Lr0gUBSqQrfE7h67oKE$LDeeOCtslWxiCEQdxx4xAUFsyzczlhC+FX1C/rwcoqk\"}//
-        // ....
+    // pub async fn _get_user_by_name_index(&mut self, _username: &str) {
+    // Create index for username
+    // FT.CREATE idx:username
+    //   ON JSON
+    //   PREFIX 1 "user:"
+    //   SCHEMA $.username AS username TEXT
+    //
+    // Then search with
+    // FT.SEARCH idx:username_pending "1"
+    // redis returned list of key-value pairs
+    // key: user:b545cc19-169a-425f-8f97-3cff9d6237fc
+    // value: {\"user_id\":\"b545cc19-169a-425f-8f97-3cff9d6237fc\",\"username\":\"1\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$n9HwKN4bu7cUCojo08Tx8ke9Lr0gUBSqQrfE7h67oKE$LDeeOCtslWxiCEQdxx4xAUFsyzczlhC+FX1C/rwcoqk\"}
+    // key: user:b545cc19-169a-425f-8f97-3cff9d6237fc
+    // value: {\"user_id\":\"b545cc19-169a-425f-8f97-3cff9d6237fc\",\"username\":\"1\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$n9HwKN4bu7cUCojo08Tx8ke9Lr0gUBSqQrfE7h67oKE$LDeeOCtslWxiCEQdxx4xAUFsyzczlhC+FX1C/rwcoqk\"}//
+    // ....
 
-        // Failed to parse:
-        // bulk(int(4), string-data('"user:9511c06b-4f59-4fca-8ac5-fa544d7c1cdf"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"9511c06b-4f59-4fca-8ac5-fa544d7c1cdf\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$fpL+GDtUBZ1MMzgppZ3VUaz11w+rBqTr3umNY1kDxWw$TZLCDdX4ZFAMykPWodwnwdDJw6lS/QyG9SaGK31quSI\"}"')), string-data('"user:09f53c2e-421a-4b88-9aa4-5084e4c3111f"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"09f53c2e-421a-4b88-9aa4-5084e4c3111f\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$02yKNoQzWk1NKw5t7iHh0EpEQqWOPfK9U6h42D3lWcI$E0dp+o5tuJqzMDZ7v8F+nOB0sSEL7l+RGUOzHS1MRw8\"}"')), string-data('"user:9fd64f6f-bb5c-4a99-868a-5280191d1880"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"9fd64f6f-bb5c-4a99-868a-5280191d1880\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$9zKdgiZZzL0P9Kp5dTq4MgtqTG5RN4q7SVAw3dlN5yc$fGNscohzAQlpjEim6KXx0yrBntGGTl1HfJGnR1+sUdM\"}"')), string-data('"user:35c23941-dc22-4721-b574-7ea31a887cc9"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"35c23941-dc22-4721-b574-7ea31a887cc9\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$smWqFAA9lIDGWFYroGHlwdMxWJaBfCxQzOYCYAvhjYk$BQlWXTQnk8XfQfRbQq8Ll93W067elMWWvE+M5JUMrSM\"}"'))))
-        //{  N returned objects,     user-id                                     } , {   Path,                 JSON-as-string-data ...
-        //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
-        //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
-        //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
-        // let result = redis::cmd("FT.SEARCH").arg("idx:username").arg(username).query_async(&mut self.connection).await.unwrap();
-        //
-        // match resulta {
-        //     Value::Nil => {}
-        //     Value::Int(_) => {}
-        //     Value::Data(_) => {}
-        //     Value::Bulk(v) => {User::from_redis_values(&*v).expect("TODO: panic message");}
-        //     Value::Status(_) => {}
-        //     Value::Okay => {}
-        // }
-        // for (_, v) in result.as_sequence()
-        //         .unwrap()
-        //         .iter()
-        //         .skip(1)
-        //         .into_iter()
-        //         .tuples()
-        // {
-        //     println!("{v:?}");
-        //     User::from_redis_value(v).expect("TODO: panic message");
-        // }
-        // result.to_vec();
-    }
+    // Failed to parse:
+    // bulk(int(4), string-data('"user:9511c06b-4f59-4fca-8ac5-fa544d7c1cdf"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"9511c06b-4f59-4fca-8ac5-fa544d7c1cdf\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$fpL+GDtUBZ1MMzgppZ3VUaz11w+rBqTr3umNY1kDxWw$TZLCDdX4ZFAMykPWodwnwdDJw6lS/QyG9SaGK31quSI\"}"')), string-data('"user:09f53c2e-421a-4b88-9aa4-5084e4c3111f"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"09f53c2e-421a-4b88-9aa4-5084e4c3111f\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$02yKNoQzWk1NKw5t7iHh0EpEQqWOPfK9U6h42D3lWcI$E0dp+o5tuJqzMDZ7v8F+nOB0sSEL7l+RGUOzHS1MRw8\"}"')), string-data('"user:9fd64f6f-bb5c-4a99-868a-5280191d1880"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"9fd64f6f-bb5c-4a99-868a-5280191d1880\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$9zKdgiZZzL0P9Kp5dTq4MgtqTG5RN4q7SVAw3dlN5yc$fGNscohzAQlpjEim6KXx0yrBntGGTl1HfJGnR1+sUdM\"}"')), string-data('"user:35c23941-dc22-4721-b574-7ea31a887cc9"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"35c23941-dc22-4721-b574-7ea31a887cc9\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$smWqFAA9lIDGWFYroGHlwdMxWJaBfCxQzOYCYAvhjYk$BQlWXTQnk8XfQfRbQq8Ll93W067elMWWvE+M5JUMrSM\"}"'))))
+    //{  N returned objects,     user-id                                     } , {   Path,                 JSON-as-string-data ...
+    //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
+    //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
+    //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
+    // let result = redis::cmd("FT.SEARCH").arg("idx:username").arg(username).query_async(&mut self.connection).await.unwrap();
+    //
+    // match resulta {
+    //     Value::Nil => {}
+    //     Value::Int(_) => {}
+    //     Value::Data(_) => {}
+    //     Value::Bulk(v) => {User::from_redis_values(&*v).expect("TODO: panic message");}
+    //     Value::Status(_) => {}
+    //     Value::Okay => {}
+    // }
+    // for (_, v) in result.as_sequence()
+    //         .unwrap()
+    //         .iter()
+    //         .skip(1)
+    //         .into_iter()
+    //         .tuples()
+    // {
+    //     println!("{v:?}");
+    //     User::from_redis_value(v).expect("TODO: panic message");
+    // }
+    // result.to_vec();
 }
 
 #[async_trait]
@@ -186,6 +185,16 @@ impl PersistMessage for RedisDatabaseService {
             .map(|response| serde_json::from_str(response).unwrap())
             .collect();
         Ok(messages)
+    }
+
+    async fn get_hostnames_of_user(&mut self, user_id: &UserID) -> Result<Vec<String>> {
+        let key = format!("messages:{user_id}:*");
+        let keys: Vec<String> = self.connection.keys(key).await?;
+        let hostnames = keys
+            .iter()
+            .map(|item| item.split(":").last().unwrap().to_string())
+            .collect::<Vec<String>>();
+        Ok(hostnames)
     }
 }
 
@@ -214,14 +223,21 @@ async fn test_add_messages() {
     test_user.username = "asdf".to_string();
     let mut db = RedisDatabaseService::new().await.unwrap();
     let mut test_message = MessageBackend::default();
-    test_message.hostname = "testhostname".into();
     db.add_user(&test_user).await;
 
-    let key = MessageKey {
-        user_id: test_user.user_id.clone(),
-        hostname: test_message.hostname.clone(),
-    };
-    db.add_message(&key, &test_message).await.unwrap();
-    assert_eq!(db.find_messages(&key).await.unwrap().len(), 1);
+    let n_hostnames = 3;
+    for i in 0..n_hostnames {
+        test_message.hostname = format!("testhostname-{}", i);
+        let key = MessageKey {
+            user_id: test_user.user_id.clone(),
+            hostname: test_message.hostname.clone(),
+        };
+        db.add_message(&key, &test_message).await.unwrap();
+        assert_eq!(db.find_messages(&key).await.unwrap().len(), 1);
+    }
+
+    let hostnames = db.get_hostnames_of_user(&test_user.user_id).await.unwrap();
+    assert_eq!(hostnames.len(), n_hostnames);
+
     db.delete_user(&test_user.user_id).await;
 }

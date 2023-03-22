@@ -2,7 +2,7 @@ use crate::api::AppStateWithCounter;
 use crate::model::message::{MessageBackend, MessageToken};
 use crate::persistance::{MessageKey, PersistMessage};
 use actix_identity::Identity;
-use actix_web::{post, web, Responder};
+use actix_web::{post, get, web, Responder};
 
 use crate::errors::ServiceError;
 
@@ -58,7 +58,7 @@ pub(crate) async fn add_message(
     Ok("success".to_string())
 }
 
-#[post("/messages/hostnames")]
+#[get("/messages/hostnames")]
 pub(crate) async fn get_message_hostnames(
     identity: Identity,
     state: web::Data<AppStateWithCounter>,

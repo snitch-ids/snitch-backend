@@ -47,7 +47,6 @@ impl Users {
         }
     }
 
-    #[allow(dead_code)]
     pub fn example() -> Self {
         let test_user = User::new("xx".to_string(), hash_password("xx"));
         let mut users = Users {

@@ -2,7 +2,7 @@ use crate::AppStateWithCounter;
 use actix_identity::Identity;
 
 use crate::service::authentication::valid_hash;
-use actix_web::error::ErrorUnauthorized;
+
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{error, get, post, web, HttpMessage, Responder};

@@ -1,14 +1,14 @@
 use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
 use crate::persistance::{MessageKey, PersistMessage};
-use actix_web::error::ErrorUnauthorized;
+
 use anyhow::{Ok, Result};
 use async_trait::async_trait;
 
 use log::{debug, info};
 use redis::aio;
 use redis::JsonAsyncCommands;
-use redis::{AsyncCommands, FromRedisValue, Value};
+use redis::{AsyncCommands, FromRedisValue};
 use serde::Serialize;
 use serde_json::json;
 
@@ -198,7 +198,7 @@ impl PersistMessage for RedisDatabaseService {
         let keys: Vec<String> = self.connection.keys(key).await?;
         let hostnames = keys
             .iter()
-            .map(|item| item.split(":").last().unwrap().to_string())
+            .map(|item| item.split(':').last().unwrap().to_string())
             .collect::<Vec<String>>();
         Ok(hostnames)
     }

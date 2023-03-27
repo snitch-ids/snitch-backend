@@ -1,3 +1,4 @@
+use std::i8::MIN;
 use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
 use crate::persistance::{MessageKey, PersistMessage};
@@ -6,7 +7,7 @@ use anyhow::{Ok, Result};
 use async_trait::async_trait;
 
 use log::{debug, info};
-use redis::aio;
+use redis::{aio, RedisError};
 use redis::JsonAsyncCommands;
 use redis::{AsyncCommands, FromRedisValue};
 use serde::Serialize;
@@ -18,6 +19,13 @@ pub struct RedisDatabaseService {
 }
 
 const MAX_MESSAGES: isize = 1000;
+const MINUTE: usize = 60;
+const DAY: usize = 60 * MINUTE * 24;
+
+enum TTL {
+    PendingUser = (15 * MINUTE) as isize,
+    Message = (30 * DAY) as isize,
+}
 
 #[derive(Serialize)]
 struct Empty {}
@@ -64,12 +72,13 @@ impl RedisDatabaseService {
             .unwrap();
     }
 
-    pub async fn add_user_pending(&mut self, user: &User, nonce: &Nonce) {
-        let _: () = self
-            .connection
-            .json_set(format!("user_pending:{nonce}"), "$", &json!(user))
-            .await
-            .unwrap();
+    pub async fn add_user_pending(&mut self, user: &User, nonce: &Nonce) -> Result<()> {
+        let key = format!("user_pending:{nonce}");
+        self.connection
+            .json_set(&key, "$", &json!(user))
+            .await?;
+        self.connection.expire(&key, TTL::PendingUser as usize).await?;
+        Ok(())
     }
 
     pub async fn confirm_user_pending(&mut self, nonce: &Nonce) -> Result<()> {
@@ -171,12 +180,13 @@ impl RedisDatabaseService {
 impl PersistMessage for RedisDatabaseService {
     async fn add_message(&mut self, key: &MessageKey, message: &MessageBackend) -> Result<()> {
         println!("storing in database: {:?}", message);
+        let key = key.to_redis_key();
         let _: () = self
             .connection
-            .rpush(key.to_redis_key(), message)
-            .await
-            .unwrap();
+            .rpush(&key, message)
+            .await?;
         info!("storing in database: {:?}... finished", message);
+        self.connection.expire(&key, TTL::PendingUser as usize).await?;
 
         Ok(())
     }

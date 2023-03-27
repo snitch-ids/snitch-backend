@@ -1,4 +1,4 @@
-use crate::errors::ServiceError;
+use crate::errors::APIError;
 use crate::model::user::UserID;
 use crate::persistance::token::TokenState;
 use actix_identity::Identity;
@@ -9,7 +9,7 @@ use log::info;
 pub(crate) async fn create_token(
     id: Identity,
     token_state: web::Data<TokenState>,
-) -> Result<impl Responder, ServiceError> {
+) -> Result<impl Responder, APIError> {
     info!("generate new token request");
     let user_id: UserID = id.id().unwrap().into();
     let mut tokens = token_state.token.lock().await;
@@ -21,7 +21,7 @@ pub(crate) async fn create_token(
 pub(crate) async fn get_token(
     id: Identity,
     token_state: web::Data<TokenState>,
-) -> Result<impl Responder, ServiceError> {
+) -> Result<impl Responder, APIError> {
     info!("get token request");
     let user_id: UserID = id.id().unwrap().into();
     let tokens = token_state.token.lock().await;

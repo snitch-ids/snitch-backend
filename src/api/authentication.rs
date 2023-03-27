@@ -9,6 +9,7 @@ use actix_web::{error, get, post, web, HttpMessage, Responder};
 
 use actix_web_lab::web::Redirect;
 
+use crate::errors::APIError;
 use log::debug;
 use serde::{Deserialize, Serialize};
 
@@ -29,23 +30,18 @@ pub async fn login(
     req: actix_web::HttpRequest,
     login_request: web::Json<LoginRequest>,
     state: Data<AppStateWithCounter>,
-) -> actix_web::Result<impl Responder> {
+) -> Result<impl Responder, APIError> {
     let mut users = state.messages.lock().await;
     let username = &login_request.username;
-    let user = users
-        .get_user_by_name(username)
-        .await
-        .map_err(ErrorUnauthorized)?;
-    match valid_hash(&user.password_hash, &login_request.password) {
-        Ok(_b) => {
+    debug!("login request for {}", username);
+    if let Some(user) = users.get_user_by_name(username).await {
+        if valid_hash(&user.password_hash, &login_request.password) {
             Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
-            Ok("username".to_string())
-        }
-        Err(e) => {
-            debug!("invalid username {username}",);
-            Err(error::ErrorUnauthorized(e))
+            return Ok("success");
         }
     }
+
+    Err(APIError::Unauthorized)
 }
 
 #[get("/")]

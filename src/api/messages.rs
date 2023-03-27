@@ -2,9 +2,9 @@ use crate::api::AppStateWithCounter;
 use crate::model::message::{MessageBackend, MessageToken};
 use crate::persistance::{MessageKey, PersistMessage};
 use actix_identity::Identity;
-use actix_web::{post, get, web, Responder};
+use actix_web::{get, post, web, Responder};
 
-use crate::errors::ServiceError;
+use crate::errors::APIError;
 
 use crate::model::user::UserID;
 use crate::TokenState;
@@ -30,12 +30,12 @@ pub(crate) async fn add_message(
     message: web::Json<MessageBackend>,
     token_state: web::Data<TokenState>,
     state: web::Data<AppStateWithCounter>,
-) -> Result<impl Responder, ServiceError> {
+) -> Result<impl Responder, APIError> {
     let token_store = token_state.token.lock().await;
     let token: MessageToken = auth.token().trim().to_string();
 
     if !token_store.has_token(&token) {
-        return Err(ServiceError::BadRequest("invalid token".to_string()));
+        return Err(APIError::BadRequest("invalid token".to_string()));
     }
     let obj = message.into_inner();
     let mut message_db = state.messages.lock().await;
@@ -62,14 +62,14 @@ pub(crate) async fn add_message(
 pub(crate) async fn get_message_hostnames(
     identity: Identity,
     state: web::Data<AppStateWithCounter>,
-) -> Result<impl Responder, ServiceError> {
+) -> Result<impl Responder, APIError> {
     let mut messages_state = state.messages.lock().await;
     let user_id: UserID = identity.id().unwrap().into();
 
     let hostnames: Vec<String> = messages_state
         .get_hostnames_of_user(&user_id)
         .await
-        .map_err(|_| ServiceError::InternalServerError)?;
+        .map_err(|_| APIError::InternalServerError)?;
     info!("returning {} objects ", hostnames.len());
     Ok(web::Json(hostnames))
 }
@@ -79,7 +79,7 @@ pub(crate) async fn get_messages_by_hostname(
     identity: Identity,
     info: web::Json<MessageRequest>,
     state: web::Data<AppStateWithCounter>,
-) -> Result<impl Responder, ServiceError> {
+) -> Result<impl Responder, APIError> {
     info!("received request for {}", &info.hostname);
     let mut messages_state = state.messages.lock().await;
     let user_id: UserID = identity.id().unwrap().into();
@@ -90,7 +90,7 @@ pub(crate) async fn get_messages_by_hostname(
     let messages: Vec<MessageBackend> = messages_state
         .find_messages(&key)
         .await
-        .map_err(|_| ServiceError::InternalServerError)?;
+        .map_err(|_| APIError::InternalServerError)?;
     info!("returning {} objects ", messages.len());
     Ok(web::Json(messages))
 }

@@ -1,6 +1,6 @@
 use crate::api::AppStateWithCounter;
-use crate::errors::ServiceError;
-use crate::errors::ServiceError::InternalServerError;
+use crate::errors::APIError;
+use crate::errors::APIError::InternalServerError;
 use crate::model::user::{User, UserID};
 use crate::service::authentication::hash_password;
 use crate::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ use log::info;
 pub async fn get_user_by_id(
     id: Identity,
     state: web::Data<AppStateWithCounter>,
-) -> Result<impl Responder, ServiceError> {
+) -> Result<impl Responder, APIError> {
     let user_id: UserID = id.id().unwrap().into();
     let users = state.users.lock().await;
     let added_user = users
@@ -26,7 +26,7 @@ pub async fn get_user_by_id(
 pub(crate) async fn get_users(
     _id: Identity,
     state: web::Data<AppStateWithCounter>,
-) -> Result<impl Responder, ServiceError> {
+) -> Result<impl Responder, APIError> {
     info!("request users ... needs check for admin rights");
     //if is_admin(id) {
     let users = state.users.lock().await;
@@ -45,7 +45,7 @@ pub(crate) async fn add_user(
     state: web::Data<AppStateWithCounter>,
     user: web::Json<AddUserRequest>,
     // This should be a proper actix error. Test this.
-) -> Result<impl Responder, ServiceError> {
+) -> Result<impl Responder, APIError> {
     info!("add user");
 
     let new_user = User::new(user.username.clone(), hash_password(&user.password));
@@ -59,7 +59,7 @@ pub(crate) async fn add_user(
 pub(crate) async fn delete_user(
     id: Identity,
     state: web::Data<AppStateWithCounter>,
-) -> Result<impl Responder, ServiceError> {
+) -> Result<impl Responder, APIError> {
     let mut users = state.users.lock().await;
     let user_id: UserID = id.id().unwrap().into();
     let deleted_user = users

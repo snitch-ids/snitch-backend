@@ -1,10 +1,10 @@
 snitch backend
 ==============
 
-## start development services **`localhost:8082`**
+## start development services **`localhost:8081`**
 ```shell
 cd docker
-docker-compose up
+docker-compose up redis-stack
 ```
 
 ## run the backend (debug) and provide the dotenv file as input.

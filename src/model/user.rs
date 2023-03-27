@@ -9,9 +9,6 @@ use crate::service::authentication::hash_password;
 use uuid;
 use uuid::Uuid;
 
-// #[derive(Hash, Eq, Serialize, Deserialize, Clone, Debug, Display, PartialEq)]
-// pub struct UserID(Uuid);
-
 pub(crate) type Nonce = String;
 
 #[derive(

@@ -1,6 +1,7 @@
 use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
 use crate::persistance::{MessageKey, PersistMessage};
+use actix_web::error::ErrorUnauthorized;
 use anyhow::{Ok, Result};
 use async_trait::async_trait;
 
@@ -106,14 +107,19 @@ impl RedisDatabaseService {
         serde_json::from_str(&user_str).unwrap()
     }
 
-    pub async fn get_user_by_name(&mut self, username: &str) -> Result<User> {
+    pub async fn get_user_by_name(&mut self, username: &str) -> Option<User> {
         info!("get user by name {username}");
-        let result: Value = self
+        if let Some(result) = self
             .connection
             .get(format!("user_usernames:{username}"))
-            .await?;
-        let user_id: UserID = String::from_redis_value(&result).unwrap_or_default().into();
-        Ok(self.get_user_by_id(&user_id).await)
+            .await
+            .unwrap()
+        {
+            info!("value: {:?}", result);
+            let user_id = String::from_redis_value(&result).unwrap();
+            return Some(self.get_user_by_id(&user_id.into()).await);
+        };
+        None
     }
 
     // pub async fn _get_user_by_name_index(&mut self, _username: &str) {

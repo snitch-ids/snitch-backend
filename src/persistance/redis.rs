@@ -143,7 +143,7 @@ impl PersistMessage for RedisDatabaseService {
         let _: () = self.connection.rpush(&key, message).await?;
         info!("storing in database: {:?}... finished", message);
         self.connection
-            .expire(&key, TTL::PendingUser as usize)
+            .expire(&key, TTL::Message as usize)
             .await?;
 
         Ok(())

@@ -1,11 +1,12 @@
 use crate::api::AppStateWithCounter;
 use std::env;
+use std::fmt::format;
 
 use actix_web::web::Data;
 use actix_web::{post, HttpResponse};
 use actix_web::{web, Responder};
 
-use log::info;
+use log::{error, info};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -18,6 +19,7 @@ use crate::model::user::{Nonce, User};
 use crate::service::email::{generate_registration_mail, send_registration_mail};
 use crate::service::token::random_alphanumeric_string;
 use actix_web::get;
+use lettre::message::Mailbox;
 use reqwest::Url;
 
 #[post("/register")]
@@ -27,16 +29,24 @@ pub async fn register(
 ) -> String {
     info!("register");
     let nonce = random_alphanumeric_string(40);
+    let backend_url = env::var("SNITCH_BACKEND_URL").expect("SNITCH_BACKEND_URL not defined");
+    let activation_link = Url::parse(&format!("{backend_url}/register/{nonce}")).unwrap();
+    let mail = generate_registration_mail("", &activation_link);
+
     let mut users = state.messages.lock().await;
     let user_request = register_request.into_inner();
     let user = User::from(user_request);
-    users.add_user_pending(&user, &nonce).await;
-    let backend_url = env::var("SNITCH_BACKEND_URL").expect("SNITCH_BACKEND_URL not defined");
+    let receiver: Mailbox = user.username.parse().unwrap();
 
-    let activation_link = Url::parse(&format!("{backend_url}/register/{nonce}")).unwrap();
-    let mail = generate_registration_mail("", &activation_link);
-    let receiver = user.username.parse().unwrap();
-    send_registration_mail(mail, receiver).await;
+    match users.add_user_pending(&user, &nonce).await {
+        Ok(_) => {
+            send_registration_mail(mail, receiver).await;
+        }
+        Err(e) => {
+            error!("failed adding pending user {}", e);
+        }
+    };
+
     "Sent mail".to_string()
 }
 

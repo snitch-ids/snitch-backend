@@ -1,14 +1,14 @@
-use std::i8::MIN;
+use crate::errors::APIInternalError;
 use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
 use crate::persistance::{MessageKey, PersistMessage};
 
-use anyhow::{Ok, Result};
+use anyhow::{Error, Ok, Result};
 use async_trait::async_trait;
 
 use log::{debug, info};
-use redis::{aio, RedisError};
 use redis::JsonAsyncCommands;
+use redis::{aio, RedisError};
 use redis::{AsyncCommands, FromRedisValue};
 use serde::Serialize;
 use serde_json::json;
@@ -26,9 +26,6 @@ enum TTL {
     PendingUser = (15 * MINUTE) as isize,
     Message = (30 * DAY) as isize,
 }
-
-#[derive(Serialize)]
-struct Empty {}
 
 impl RedisDatabaseService {
     pub async fn new() -> Result<Self> {
@@ -73,11 +70,17 @@ impl RedisDatabaseService {
     }
 
     pub async fn add_user_pending(&mut self, user: &User, nonce: &Nonce) -> Result<()> {
+        if self.get_user_by_name(&user.username).await.is_some() {
+            info!("not adding user pending as user already exists: {user}");
+            return Err(Error::new(APIInternalError::UserAlreadyExists(
+                user.clone(),
+            )));
+        }
         let key = format!("user_pending:{nonce}");
+        self.connection.json_set(&key, "$", &json!(user)).await?;
         self.connection
-            .json_set(&key, "$", &json!(user))
+            .expire(&key, TTL::PendingUser as usize)
             .await?;
-        self.connection.expire(&key, TTL::PendingUser as usize).await?;
         Ok(())
     }
 
@@ -130,50 +133,6 @@ impl RedisDatabaseService {
         };
         None
     }
-
-    // pub async fn _get_user_by_name_index(&mut self, _username: &str) {
-    // Create index for username
-    // FT.CREATE idx:username
-    //   ON JSON
-    //   PREFIX 1 "user:"
-    //   SCHEMA $.username AS username TEXT
-    //
-    // Then search with
-    // FT.SEARCH idx:username_pending "1"
-    // redis returned list of key-value pairs
-    // key: user:b545cc19-169a-425f-8f97-3cff9d6237fc
-    // value: {\"user_id\":\"b545cc19-169a-425f-8f97-3cff9d6237fc\",\"username\":\"1\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$n9HwKN4bu7cUCojo08Tx8ke9Lr0gUBSqQrfE7h67oKE$LDeeOCtslWxiCEQdxx4xAUFsyzczlhC+FX1C/rwcoqk\"}
-    // key: user:b545cc19-169a-425f-8f97-3cff9d6237fc
-    // value: {\"user_id\":\"b545cc19-169a-425f-8f97-3cff9d6237fc\",\"username\":\"1\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$n9HwKN4bu7cUCojo08Tx8ke9Lr0gUBSqQrfE7h67oKE$LDeeOCtslWxiCEQdxx4xAUFsyzczlhC+FX1C/rwcoqk\"}//
-    // ....
-
-    // Failed to parse:
-    // bulk(int(4), string-data('"user:9511c06b-4f59-4fca-8ac5-fa544d7c1cdf"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"9511c06b-4f59-4fca-8ac5-fa544d7c1cdf\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$fpL+GDtUBZ1MMzgppZ3VUaz11w+rBqTr3umNY1kDxWw$TZLCDdX4ZFAMykPWodwnwdDJw6lS/QyG9SaGK31quSI\"}"')), string-data('"user:09f53c2e-421a-4b88-9aa4-5084e4c3111f"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"09f53c2e-421a-4b88-9aa4-5084e4c3111f\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$02yKNoQzWk1NKw5t7iHh0EpEQqWOPfK9U6h42D3lWcI$E0dp+o5tuJqzMDZ7v8F+nOB0sSEL7l+RGUOzHS1MRw8\"}"')), string-data('"user:9fd64f6f-bb5c-4a99-868a-5280191d1880"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"9fd64f6f-bb5c-4a99-868a-5280191d1880\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$9zKdgiZZzL0P9Kp5dTq4MgtqTG5RN4q7SVAw3dlN5yc$fGNscohzAQlpjEim6KXx0yrBntGGTl1HfJGnR1+sUdM\"}"')), string-data('"user:35c23941-dc22-4721-b574-7ea31a887cc9"'), bulk(string-data('"$"'), string-data('"{\"user_id\":\"35c23941-dc22-4721-b574-7ea31a887cc9\",\"username\":\"Peter\",\"password_hash\":\"$argon2id$v=19$m=4096,t=192,p=8$smWqFAA9lIDGWFYroGHlwdMxWJaBfCxQzOYCYAvhjYk$BQlWXTQnk8XfQfRbQq8Ll93W067elMWWvE+M5JUMrSM\"}"'))))
-    //{  N returned objects,     user-id                                     } , {   Path,                 JSON-as-string-data ...
-    //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
-    //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
-    //                           user-id                                     } , {   Path,                 JSON-as-string-data ...
-    // let result = redis::cmd("FT.SEARCH").arg("idx:username").arg(username).query_async(&mut self.connection).await.unwrap();
-    //
-    // match resulta {
-    //     Value::Nil => {}
-    //     Value::Int(_) => {}
-    //     Value::Data(_) => {}
-    //     Value::Bulk(v) => {User::from_redis_values(&*v).expect("TODO: panic message");}
-    //     Value::Status(_) => {}
-    //     Value::Okay => {}
-    // }
-    // for (_, v) in result.as_sequence()
-    //         .unwrap()
-    //         .iter()
-    //         .skip(1)
-    //         .into_iter()
-    //         .tuples()
-    // {
-    //     println!("{v:?}");
-    //     User::from_redis_value(v).expect("TODO: panic message");
-    // }
-    // result.to_vec();
 }
 
 #[async_trait]
@@ -181,12 +140,11 @@ impl PersistMessage for RedisDatabaseService {
     async fn add_message(&mut self, key: &MessageKey, message: &MessageBackend) -> Result<()> {
         println!("storing in database: {:?}", message);
         let key = key.to_redis_key();
-        let _: () = self
-            .connection
-            .rpush(&key, message)
-            .await?;
+        let _: () = self.connection.rpush(&key, message).await?;
         info!("storing in database: {:?}... finished", message);
-        self.connection.expire(&key, TTL::PendingUser as usize).await?;
+        self.connection
+            .expire(&key, TTL::PendingUser as usize)
+            .await?;
 
         Ok(())
     }

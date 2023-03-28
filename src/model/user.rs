@@ -34,24 +34,6 @@ impl From<String> for UserID {
     }
 }
 
-// impl FromRedisValue for UserID {
-//     fn from_redis_value(v: &Value) -> RedisResult<Self> {
-//         return match v {
-//             Value::Nil => {UserID("".to_string())},
-//             Value::Data(d) => {},
-//             _ => println!("fail")
-//         }
-//     }
-//
-//     fn from_redis_values(items: &[Value]) -> RedisResult<Vec<Self>> {
-//         Ok(vec![UserID::new_v4()])
-//     }
-//
-//     fn from_byte_vec(_vec: &[u8]) -> Option<Vec<Self>> {
-//         None
-//     }
-// }
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct User {
     pub user_id: UserID,

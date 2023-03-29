@@ -37,16 +37,16 @@ impl From<String> for UserID {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct User {
     pub user_id: UserID,
-    pub username: String,
+    pub email: String,
     pub password_hash: String,
 }
 
 impl User {
-    pub fn new(username: String, password: String) -> Self {
+    pub fn new(email: String, password: String) -> Self {
         let password_hash = hash_password(&password);
         Self {
             user_id: UserID::new(),
-            username,
+            email,
             password_hash,
         }
     }
@@ -59,13 +59,13 @@ impl User {
 
 impl Display for User {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "name={}, uuid={}", self.username, self.user_id)
+        writeln!(f, "name={}, uuid={}", self.email, self.user_id)
     }
 }
 
 impl From<RegistrationRequest> for User {
     fn from(value: RegistrationRequest) -> Self {
-        User::new(value.username, value.password)
+        User::new(value.email, value.password)
     }
 }
 

@@ -36,7 +36,7 @@ pub(crate) async fn get_users(
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AddUserRequest {
-    pub(crate) username: String,
+    pub(crate) email: String,
     pub(crate) password: String,
 }
 
@@ -48,7 +48,7 @@ pub(crate) async fn add_user(
 ) -> Result<impl Responder, APIError> {
     info!("add user");
 
-    let new_user = User::new(user.username.clone(), hash_password(&user.password));
+    let new_user = User::new(user.email.clone(), hash_password(&user.password));
 
     let mut users = state.users.lock().await;
     let added_user = users.add_user(new_user).map_err(|_e| InternalServerError)?;

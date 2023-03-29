@@ -34,11 +34,11 @@ impl Users {
     }
 
     #[allow(dead_code)]
-    pub fn get_user_by_name(&self, username: &str) -> Option<&User> {
+    pub fn get_user_by_name(&self, email: &str) -> Option<&User> {
         let users = self
             .users
             .values()
-            .filter(|user| user.username == username)
+            .filter(|user| user.email == email)
             .collect::<Vec<&User>>();
         if users.len() != 1 {
             None

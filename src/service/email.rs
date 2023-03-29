@@ -34,9 +34,9 @@ lazy_static! {
     };
 }
 
-pub fn generate_registration_mail(username: &str, activation_link: &Url) -> RegistrationMessage {
+pub fn generate_registration_mail(email: &str, activation_link: &Url) -> RegistrationMessage {
     let mut context = Context::new();
-    context.insert("username", username);
+    context.insert("email", email);
     context.insert("activation_link", &activation_link.to_string());
 
     RegistrationMessage {

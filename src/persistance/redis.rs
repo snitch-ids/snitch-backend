@@ -43,10 +43,10 @@ impl RedisDatabaseService {
 
     pub async fn add_user_index(&mut self, user: &User) {
         let user_id = &user.user_id;
-        let username = &user.username;
+        let email = &user.email;
         let _: () = self
             .connection
-            .set(format!("user_usernames:{username}"), user_id.to_string())
+            .set(format!("user_email:{email}"), user_id.to_string())
             .await
             .unwrap();
     }
@@ -70,7 +70,7 @@ impl RedisDatabaseService {
     }
 
     pub async fn add_user_pending(&mut self, user: &User, nonce: &Nonce) -> Result<()> {
-        if self.get_user_by_name(&user.username).await.is_some() {
+        if self.get_user_by_email(&user.email).await.is_some() {
             info!("not adding user pending as user already exists: {user}");
             return Err(Error::new(APIInternalError::UserAlreadyExists(
                 user.clone(),
@@ -110,7 +110,7 @@ impl RedisDatabaseService {
     }
 
     pub async fn get_user_by_id(&mut self, user_id: &UserID) -> User {
-        info!("user_id {user_id}");
+        info!("get user by user_id {user_id}");
         let user_str: String = self
             .connection
             .json_get(format!("user:{user_id}"), ".")
@@ -119,15 +119,15 @@ impl RedisDatabaseService {
         serde_json::from_str(&user_str).unwrap()
     }
 
-    pub async fn get_user_by_name(&mut self, username: &str) -> Option<User> {
-        info!("get user by name {username}");
+    pub async fn get_user_by_email(&mut self, email: &str) -> Option<User> {
+        info!("get user by email {email}");
         if let Some(result) = self
             .connection
-            .get(format!("user_usernames:{username}"))
+            .get(format!("user_email:{email}"))
             .await
             .unwrap()
         {
-            info!("value: {:?}", result);
+            info!("found: {:?}", result);
             let user_id = String::from_redis_value(&result).unwrap();
             return Some(self.get_user_by_id(&user_id.into()).await);
         };
@@ -142,9 +142,7 @@ impl PersistMessage for RedisDatabaseService {
         let key = key.to_redis_key();
         let _: () = self.connection.rpush(&key, message).await?;
         info!("storing in database: {:?}... finished", message);
-        self.connection
-            .expire(&key, TTL::Message as usize)
-            .await?;
+        self.connection.expire(&key, TTL::Message as usize).await?;
 
         Ok(())
     }
@@ -181,7 +179,7 @@ async fn test_add_delete_user() {
 
     db.add_user(&test_user).await;
     let _x = db.get_user_by_id(&test_user.user_id).await;
-    let x = db.get_user_by_name(&test_user.username).await.unwrap();
+    let x = db.get_user_by_email(&test_user.username).await.unwrap();
     assert_eq!(x.username, test_user.username);
     assert_eq!(x.user_id, test_user.user_id);
 

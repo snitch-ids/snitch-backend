@@ -2,6 +2,7 @@ use crate::AppStateWithCounter;
 use actix_identity::Identity;
 
 use crate::service::authentication::valid_hash;
+use validator::{Validate, ValidationError};
 
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
@@ -13,9 +14,12 @@ use crate::errors::APIError;
 use log::debug;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Validate)]
 pub struct LoginRequest {
-    username: String,
+    #[validate(email)]
+    email: String,
+
+    #[validate(length(min = 8, max = 64))]
     password: String,
 }
 
@@ -31,10 +35,15 @@ pub async fn login(
     login_request: web::Json<LoginRequest>,
     state: Data<AppStateWithCounter>,
 ) -> Result<impl Responder, APIError> {
+    let login_request = login_request.into_inner();
+    if let Err(e) = login_request.validate() {
+        return Err(APIError::BadRequest(format!("{e}")));
+    }
+
     let mut users = state.messages.lock().await;
-    let username = &login_request.username;
-    debug!("login request for {}", username);
-    if let Some(user) = users.get_user_by_name(username).await {
+    let email = &login_request.email;
+    debug!("login request for {}", email);
+    if let Some(user) = users.get_user_by_email(email).await {
         if valid_hash(&user.password_hash, &login_request.password) {
             Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
             return Ok("success");

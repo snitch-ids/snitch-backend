@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use crate::errors::APIError;
 use crate::model::user::UserID;
 use crate::persistance::token::TokenState;
@@ -25,6 +26,9 @@ pub(crate) async fn get_token(
     info!("get token request");
     let user_id: UserID = id.id().unwrap().into();
     let tokens = token_state.token.lock().await;
-    let token = tokens.get_token_of_user_id(&user_id).unwrap();
-    Ok(web::Json(token.clone()))
+    if let Some(token) = tokens.get_token_of_user_id(&user_id){
+        Ok(web::Json(token.clone()))
+    } else {
+        Ok(web::Json(HashSet::new()))
+    }
 }

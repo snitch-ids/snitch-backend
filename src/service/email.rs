@@ -48,8 +48,10 @@ pub async fn send_registration_mail(message: RegistrationMessage, receiver: Mail
     let smtp_user = env::var("SNITCH_SMTP_USER").expect("SNITCH_SMTP_USER not defined");
     let smtp_password = env::var("SNITCH_SMTP_PASSWORD").expect("SNITCH_SMTP_PASSWORD not defined");
     let smtp_server = env::var("SNITCH_SMTP_URL").expect("SNITCH_SMTP_URL not defined");
+    let port = 465;
+
     let email = Message::builder()
-        .from("mk@quakesaver.net".parse().unwrap())
+        .from("noreply@snitch.cool".parse().unwrap())
         .reply_to("noreply@snitch.cool".parse().unwrap())
         .to(receiver)
         .subject("Snitch User Registration")
@@ -60,6 +62,7 @@ pub async fn send_registration_mail(message: RegistrationMessage, receiver: Mail
     let mailer = SmtpTransport::relay(&smtp_server)
         .unwrap()
         .credentials(credentials)
+        .port(port)
         .authentication(vec![Mechanism::Login])
         .build();
 
@@ -70,7 +73,7 @@ pub async fn send_registration_mail(message: RegistrationMessage, receiver: Mail
 
 #[tokio::test]
 async fn test_email_client() {
-    let test_recipient = "info@snitch.cool";
+    let test_recipient = "marius.kriegerowski@gmail.com";
     let test_message = generate_registration_mail(
         "Bob",
         &Url::parse("https://snitch.cool/register/isdjfolisjdflijs").unwrap(),

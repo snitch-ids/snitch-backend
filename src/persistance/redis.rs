@@ -174,25 +174,25 @@ impl PersistMessage for RedisDatabaseService {
 async fn test_add_delete_user() {
     use crate::model::user::User;
     let mut test_user = User::example();
-    test_user.username = "xxxx".to_string();
+    test_user.email = "x.x@x.x".to_string();
     let mut db = RedisDatabaseService::new().await.unwrap();
 
     db.add_user(&test_user).await;
     let _x = db.get_user_by_id(&test_user.user_id).await;
-    let x = db.get_user_by_email(&test_user.username).await.unwrap();
-    assert_eq!(x.username, test_user.username);
+    let x = db.get_user_by_email(&test_user.email).await.unwrap();
+    assert_eq!(x.email, test_user.email);
     assert_eq!(x.user_id, test_user.user_id);
 
     db.delete_user(&test_user.user_id).await;
     // Test this to improve error handling
-    // assert_eq!(db.get_user_by_name(&test_user.username).await.ok(), None);
+    // assert_eq!(db.get_user_by_name(&test_user.email).await.ok(), None);
 }
 
 #[tokio::test]
 async fn test_add_messages() {
     use crate::model::user::User;
     let mut test_user = User::example();
-    test_user.username = "asdf".to_string();
+    test_user.email = "x.x@x.x".to_string();
     let mut db = RedisDatabaseService::new().await.unwrap();
     let mut test_message = MessageBackend::default();
     db.add_user(&test_user).await;

@@ -11,7 +11,7 @@ use actix_web::{error, get, post, web, HttpMessage, Responder};
 use actix_web_lab::web::Redirect;
 
 use crate::errors::APIError;
-use log::debug;
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug, Validate)]
@@ -66,6 +66,7 @@ pub async fn index(identity: Option<Identity>) -> actix_web::Result<impl Respond
 
 #[post("/logout")]
 pub async fn logout(id: Identity) -> impl Responder {
+    info!("logging out {:?}", id.id());
     id.logout();
     Redirect::to("/").using_status_code(StatusCode::FOUND)
 }

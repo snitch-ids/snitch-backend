@@ -1,10 +1,10 @@
-use std::collections::HashSet;
 use crate::errors::APIError;
 use crate::model::user::UserID;
 use crate::persistance::token::TokenState;
 use actix_identity::Identity;
 use actix_web::{get, web, Responder};
 use log::info;
+use std::collections::HashSet;
 
 #[get("/token/new")]
 pub(crate) async fn create_token(
@@ -26,7 +26,7 @@ pub(crate) async fn get_token(
     info!("get token request");
     let user_id: UserID = id.id().unwrap().into();
     let tokens = token_state.token.lock().await;
-    if let Some(token) = tokens.get_token_of_user_id(&user_id){
+    if let Some(token) = tokens.get_token_of_user_id(&user_id) {
         Ok(web::Json(token.clone()))
     } else {
         Ok(web::Json(HashSet::new()))

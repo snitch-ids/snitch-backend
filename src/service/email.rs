@@ -7,6 +7,7 @@ use lettre::{transport::smtp::authentication::Credentials, Message, SmtpTranspor
 
 use reqwest::Url;
 
+use lettre::transport::smtp::Error;
 use std::env;
 
 use tera;
@@ -44,7 +45,10 @@ pub fn generate_registration_mail(email: &str, activation_link: &Url) -> Registr
     }
 }
 
-pub async fn send_registration_mail(message: RegistrationMessage, receiver: Mailbox) -> Response {
+pub async fn send_registration_mail(
+    message: RegistrationMessage,
+    receiver: Mailbox,
+) -> Result<Response, Error> {
     let smtp_user = env::var("SNITCH_SMTP_USER").expect("SNITCH_SMTP_USER not defined");
     let smtp_password = env::var("SNITCH_SMTP_PASSWORD").expect("SNITCH_SMTP_PASSWORD not defined");
     let smtp_server = env::var("SNITCH_SMTP_URL").expect("SNITCH_SMTP_URL not defined");
@@ -66,9 +70,7 @@ pub async fn send_registration_mail(message: RegistrationMessage, receiver: Mail
         .authentication(vec![Mechanism::Login])
         .build();
 
-    mailer
-        .send(&email)
-        .expect("failed sending registration mail")
+    mailer.send(&email)
 }
 
 #[tokio::test]

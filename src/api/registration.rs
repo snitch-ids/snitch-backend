@@ -10,7 +10,7 @@ use actix_web::{web, Responder};
 use log::{error, info};
 use serde::Deserialize;
 
-use crate::errors::APIError::BadRequest;
+use crate::errors::APIError::{BadRequest, InternalServerError};
 use crate::model::user::{Nonce, User};
 use crate::service::email::{generate_registration_mail, send_registration_mail};
 use crate::service::token::random_alphanumeric_string;
@@ -49,16 +49,15 @@ pub async fn register(
     let user = User::from(user_request);
     let receiver: Mailbox = user.email.parse().unwrap();
 
-    match users.add_user_pending(&user, &nonce).await {
-        Ok(_) => {
-            send_registration_mail(mail, receiver).await;
-        }
-        Err(e) => {
-            error!("failed adding pending user {}", e);
-        }
-    };
+    if let Err(e) = users.add_user_pending(&user, &nonce).await {
+        error!("failed adding pending user {}", e);
+    }
 
-    Ok("Sent mail".to_string())
+    if let Err(e) = send_registration_mail(mail, receiver).await {
+        error!("{e}");
+        return Err(InternalServerError);
+    }
+    Ok("ok")
 }
 
 #[get("/register/{nonce}")]

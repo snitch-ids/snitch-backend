@@ -9,5 +9,5 @@ RUN cargo build --release --jobs 2
 
 FROM rust:latest AS RUNNER
 WORKDIR snitch-backend
-COPY --from=BUILDER /snitch-backend/target/debug/snitch-backend ./
+COPY --from=BUILDER /snitch-backend/target/release/snitch-backend ./
 CMD ["./snitch-backend"]

@@ -1,6 +1,5 @@
 pub mod redis;
 pub mod token;
-pub mod users;
 
 use crate::model::message::MessageBackend;
 use crate::model::user::UserID;

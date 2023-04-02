@@ -6,7 +6,7 @@ use crate::service::authentication::hash_password;
 use crate::{Deserialize, Serialize};
 use actix_identity::Identity;
 use actix_web::{delete, get, post, web, Responder};
-use log::info;
+use log::{error, info};
 
 #[get("/user")]
 pub async fn get_user_by_id(
@@ -14,24 +14,10 @@ pub async fn get_user_by_id(
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, APIError> {
     let user_id: UserID = id.id().unwrap().into();
-    let users = state.users.lock().await;
-    let added_user = users
-        .get_user_by_id(user_id)
-        .map_err(|_e| InternalServerError)?;
+    let mut users = state.messages.lock().await;
+    let user = users.get_user_by_id(&user_id).await;
 
-    Ok(web::Json(added_user))
-}
-
-#[get("/user/all")]
-pub(crate) async fn get_users(
-    _id: Identity,
-    state: web::Data<AppStateWithCounter>,
-) -> Result<impl Responder, APIError> {
-    info!("request users ... needs check for admin rights");
-    //if is_admin(id) {
-    let users = state.users.lock().await;
-    let added_user = users.get_users().map_err(|_e| InternalServerError)?;
-    Ok(web::Json(added_user))
+    Ok(web::Json(user))
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -44,14 +30,13 @@ pub struct AddUserRequest {
 pub(crate) async fn add_user(
     state: web::Data<AppStateWithCounter>,
     user: web::Json<AddUserRequest>,
-    // This should be a proper actix error. Test this.
 ) -> Result<impl Responder, APIError> {
     info!("add user");
 
     let new_user = User::new(user.email.clone(), hash_password(&user.password));
 
-    let mut users = state.users.lock().await;
-    let added_user = users.add_user(new_user).map_err(|_e| InternalServerError)?;
+    let mut users = state.messages.lock().await;
+    let added_user = users.add_user(&new_user).await;
     Ok(web::Json(added_user))
 }
 
@@ -60,10 +45,8 @@ pub(crate) async fn delete_user(
     id: Identity,
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, APIError> {
-    let mut users = state.users.lock().await;
+    let mut users = state.messages.lock().await;
     let user_id: UserID = id.id().unwrap().into();
-    let deleted_user = users
-        .delete_user(user_id)
-        .map_err(|_e| InternalServerError)?;
+    let deleted_user = users.delete_user(&user_id).await;
     Ok(web::Json(deleted_user))
 }

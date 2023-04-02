@@ -20,12 +20,12 @@ use api::{
     messages::{add_message, get_messages_by_hostname},
     registration::register,
     token::{create_token, get_token},
-    users::{add_user, delete_user, get_user_by_id, get_users},
+    users::{add_user, delete_user, get_user_by_id},
     welcome, AppStateWithCounter,
 };
 
 use crate::api::registration::register_reply;
-use persistance::{redis::RedisDatabaseService, users::Users};
+use persistance::redis::RedisDatabaseService;
 use serde::{Deserialize, Serialize};
 
 use crate::api::messages::get_message_hostnames;
@@ -50,7 +50,6 @@ async fn main() -> std::io::Result<()> {
         .expect("failed to create redis service");
 
     let state = Data::new(AppStateWithCounter {
-        users: Mutex::new(Users::example()),
         messages: Mutex::new(db_service),
     });
 
@@ -76,7 +75,6 @@ async fn main() -> std::io::Result<()> {
             .service(get_message_hostnames) // for testing no auth
             .service(add_user)
             .service(get_user_by_id)
-            .service(get_users)
             .service(delete_user)
             .service(create_token)
             .service(get_token)

@@ -53,7 +53,10 @@ async fn main() -> std::io::Result<()> {
         messages: Mutex::new(db_service),
     });
 
-    let state_token = Data::new(TokenState::new());
+    let db_token_service = RedisDatabaseService::new()
+        .await
+        .expect("failed to create redis service");
+    let state_token = Data::new(TokenState::new(db_token_service.connection));
 
     let port = 8081;
     println!("starting server on port {port}");

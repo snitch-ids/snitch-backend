@@ -31,15 +31,12 @@ pub(crate) async fn add_message(
     token_state: web::Data<TokenState>,
     state: web::Data<AppStateWithCounter>,
 ) -> Result<impl Responder, APIError> {
-    let token_store = token_state.token.lock().await;
+    let mut token_store = token_state.token.lock().await;
     let token: MessageToken = auth.token().trim().to_string();
 
-    if !token_store.has_token(&token) {
-        return Err(APIError::BadRequest("invalid token".to_string()));
-    }
     let obj = message.into_inner();
     let mut message_db = state.messages.lock().await;
-    match token_store.get_user_id_of_token(&token) {
+    match token_store.get_user_id_of_token(&token).await {
         None => {
             info!("no user id of token {token}")
         }

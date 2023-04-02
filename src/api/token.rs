@@ -14,7 +14,7 @@ pub(crate) async fn create_token(
     info!("generate new token request");
     let user_id: UserID = id.id().unwrap().into();
     let mut tokens = token_state.token.lock().await;
-    let token = tokens.create_token_for_user_id(&user_id);
+    let token = tokens.create_token_for_user_id(&user_id).await;
     Ok(web::Json(token))
 }
 
@@ -25,10 +25,10 @@ pub(crate) async fn get_token(
 ) -> Result<impl Responder, APIError> {
     info!("get token request");
     let user_id: UserID = id.id().unwrap().into();
-    let tokens = token_state.token.lock().await;
-    if let Some(token) = tokens.get_token_of_user_id(&user_id) {
+    let mut tokens = token_state.token.lock().await;
+    if let Some(token) = tokens.get_token_of_user_id(&user_id).await {
         Ok(web::Json(token.clone()))
     } else {
-        Ok(web::Json(HashSet::new()))
+        Ok(web::Json(vec![]))
     }
 }

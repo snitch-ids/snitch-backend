@@ -1,84 +1,77 @@
 use crate::model::message::MessageToken;
-use crate::model::user::UserID;
+use crate::model::user::{User, UserID};
 
+use log::{error, info};
+use redis::{aio, AsyncCommands};
 use std::collections::{HashMap, HashSet};
+use std::str::FromStr;
 
+use crate::persistance::redis::RedisDatabaseService;
 use crate::service::token::random_alphanumeric_string;
+use async_trait::async_trait;
 use tokio::sync::Mutex;
 
 const TOKEN_LENGTH: u32 = 32;
 
-#[derive(Default)]
 pub struct TokenStore {
-    pub tokens: HashMap<UserID, HashSet<MessageToken>>,
+    pub connection: aio::Connection,
 }
 
 impl TokenStore {
-    fn new() -> Self {
-        let mut token_store = Self::default();
+    pub async fn create_token_for_user_id(&mut self, user_id: &UserID) -> MessageToken {
+        let token: String = random_alphanumeric_string(TOKEN_LENGTH);
+        let key_userid_to_token: String = format!("userid_to_token:{user_id}");
+        let _: u8 = self
+            .connection
+            .sadd(&key_userid_to_token, &token)
+            .await
+            .map_err(|e| error!("{}", e))
+            .unwrap();
 
-        #[cfg(debug_assertions)] // insert debug token for development
-        {
-            let id = UserID::new();
-            token_store
-                .tokens
-                .entry(id)
-                .or_default()
-                .insert("!!!INSECUREADMINTOKEN!!!".to_string());
-        }
-
-        token_store
-    }
-
-    pub fn create_token_for_user_id(&mut self, user_id: &UserID) -> MessageToken {
-        let token = random_alphanumeric_string(TOKEN_LENGTH);
-        let user_token = self.tokens.entry(user_id.clone()).or_default();
-        user_token.insert(token.clone());
-
+        let key_token_to_user_id: String = format!("token_to_user_id:{token}");
+        let _: u8 = self
+            .connection
+            .hset(key_token_to_user_id, "user_id", &user_id.to_string())
+            .await
+            .expect("failed adding token");
         token
     }
 
-    pub fn get_token_of_user_id(&self, user_id: &UserID) -> Option<&HashSet<MessageToken>> {
-        self.tokens.get(user_id)
+    pub async fn get_token_of_user_id(&mut self, user_id: &UserID) -> Option<Vec<MessageToken>> {
+        let key = format!("user_id_to_token:{user_id}");
+        self.connection.smembers(key).await.ok()
     }
 
-    pub fn get_user_id_of_token(&self, token: &MessageToken) -> Option<&UserID> {
-        for (user_id, tokens) in self.tokens.iter() {
-            if tokens.contains(token) {
-                return Some(user_id);
-            }
-        }
-
-        None
-    }
-
-    pub fn has_token(&self, token: &MessageToken) -> bool {
-        for x in self.tokens.values() {
-            let value = x.contains(token);
-            if value {
-                return true;
-            }
-        }
-        false
+    pub async fn get_user_id_of_token(&mut self, token: &MessageToken) -> Option<UserID> {
+        let key_token_to_user_id = format!("token_to_user_id:{token}");
+        let result: String = self
+            .connection
+            .hget(key_token_to_user_id, "user_id")
+            .await
+            .map_err(|e| error!("{e}"))
+            .unwrap();
+        UserID::from_str(&result).ok()
     }
 }
 
-#[derive(Default)]
 pub struct TokenState {
     pub token: Mutex<TokenStore>,
 }
 
 impl TokenState {
-    pub fn new() -> Self {
+    pub fn new(connection: aio::Connection) -> TokenState {
         Self {
-            token: Mutex::new(TokenStore::new()),
+            token: Mutex::new(TokenStore { connection }),
         }
     }
 }
 
-#[test]
-fn test_token_store() {
-    let mut store = TokenStore::new();
+#[tokio::test]
+async fn test_token_store() {
+    let db = RedisDatabaseService::new().await.unwrap();
+    let mut store = TokenStore {
+        connection: db.connection,
+    };
     let user_id = UserID::new();
     store.create_token_for_user_id(&user_id);
     store.create_token_for_user_id(&user_id);
@@ -86,18 +79,13 @@ fn test_token_store() {
     assert_eq!(retrieved.unwrap().len(), 2);
 }
 
-#[test]
-fn test_store_has_token() {
-    let mut store = TokenStore::default();
-    let user_id = UserID::new();
-    let token = store.create_token_for_user_id(&user_id);
-    assert!(store.has_token(&token));
-    assert!(!store.has_token(&"NONEXISTENDTOKEN".to_string()));
-}
+#[tokio::test]
+async fn test_user_id_of_token() {
+    let db = RedisDatabaseService::new().await.unwrap();
+    let mut store = TokenStore {
+        connection: db.connection,
+    };
 
-#[test]
-fn test_user_id_of_token() {
-    let mut store = TokenStore::default();
     let user_id = UserID::new();
     store.create_token_for_user_id(&user_id);
     let token = store.create_token_for_user_id(&user_id);

@@ -20,10 +20,10 @@ pub struct TokenStore {
 impl TokenStore {
     pub async fn create_token_for_user_id(&mut self, user_id: &UserID) -> MessageToken {
         let token: String = random_alphanumeric_string(TOKEN_LENGTH);
-        let key_userid_to_token: String = format!("userid_to_token:{user_id}");
+        let key_user_id_to_token: String = format!("user_id_to_token:{user_id}");
         let _: u8 = self
             .connection
-            .sadd(&key_userid_to_token, &token)
+            .sadd(&key_user_id_to_token, &token)
             .await
             .map_err(|e| error!("{}", e))
             .unwrap();
@@ -39,7 +39,7 @@ impl TokenStore {
 
     pub async fn get_token_of_user_id(&mut self, user_id: &UserID) -> Option<Vec<MessageToken>> {
         let key = format!("user_id_to_token:{user_id}");
-        self.connection.smembers(key).await.ok()
+        self.connection.smembers(&key).await.ok()
     }
 
     pub async fn get_user_id_of_token(&mut self, token: &MessageToken) -> Option<UserID> {

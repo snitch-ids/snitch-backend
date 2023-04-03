@@ -15,6 +15,7 @@ use actix_web::cookie::{Key, SameSite};
 
 use actix_web::web::Data;
 use actix_web::{middleware, App, HttpServer};
+use log::error;
 use api::{
     authentication::{index, login, logout},
     messages::{add_message, get_messages_by_hostname},
@@ -59,11 +60,15 @@ async fn main() -> std::io::Result<()> {
     let state_token = Data::new(TokenState::new(db_token_service.connection));
 
     let port = 8081;
-    println!("starting server on port {port}");
-
     let secret_key = get_secret_key();
 
     HttpServer::new(move || {
+
+        let cookie_domain = std::env::var("SNITCH_COOKIE_DOMAIN").map_err(|e| {
+            error!("Failed loading SNITCH_COOKIE_DOMAIN: {e}");
+            std::process::exit(1)
+        }).ok();
+
         let cors = Cors::permissive();
         App::new()
             .wrap(cors)
@@ -74,8 +79,8 @@ async fn main() -> std::io::Result<()> {
             .service(logout)
             .service(index)
             .service(welcome)
-            .service(get_messages_by_hostname) // for testing no auth
-            .service(get_message_hostnames) // for testing no auth
+            .service(get_messages_by_hostname)
+            .service(get_message_hostnames)
             .service(add_user)
             .service(get_user_by_id)
             .service(delete_user)
@@ -84,8 +89,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(IdentityMiddleware::default())
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
-                    .cookie_http_only(false)
-                    .cookie_domain(None)
+                    .cookie_http_only(true)
+                    .cookie_domain(cookie_domain)
                     .cookie_name(USER_COOKIE_NAME.to_string())
                     .cookie_same_site(SameSite::None)
                     .cookie_secure(false)

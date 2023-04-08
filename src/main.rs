@@ -15,7 +15,6 @@ use actix_web::cookie::{Key, SameSite};
 
 use actix_web::web::Data;
 use actix_web::{middleware, App, HttpServer};
-use log::error;
 use api::{
     authentication::{index, login, logout},
     messages::{add_message, get_messages_by_hostname},
@@ -24,6 +23,7 @@ use api::{
     users::{add_user, delete_user, get_user_by_id},
     welcome, AppStateWithCounter,
 };
+use log::error;
 
 use crate::api::registration::register_reply;
 use persistance::redis::RedisDatabaseService;
@@ -38,6 +38,13 @@ fn get_secret_key() -> Key {
 
 const ONE_HOUR: Duration = Duration::minutes(60);
 const USER_COOKIE_NAME: &str = "user_cookie";
+const PORT: u16 = 8081;
+
+#[cfg(debug_assertions)]
+const COOKIE_SECURE: bool = true;
+
+#[cfg(not(debug_assertions))]
+const COOKIE_SECURE: bool = false;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -57,17 +64,17 @@ async fn main() -> std::io::Result<()> {
     let db_token_service = RedisDatabaseService::new()
         .await
         .expect("failed to create redis service");
-    let state_token = Data::new(TokenState::new(db_token_service.connection));
 
-    let port = 8081;
+    let state_token = Data::new(TokenState::new(db_token_service.connection));
     let secret_key = get_secret_key();
 
     HttpServer::new(move || {
-
-        let cookie_domain = std::env::var("SNITCH_COOKIE_DOMAIN").map_err(|e| {
-            error!("Failed loading SNITCH_COOKIE_DOMAIN: {e}");
-            std::process::exit(1)
-        }).ok();
+        let cookie_domain = std::env::var("SNITCH_COOKIE_DOMAIN")
+            .map_err(|e| {
+                error!("Failed loading SNITCH_COOKIE_DOMAIN: {e}");
+                std::process::exit(1)
+            })
+            .ok();
 
         let cors = Cors::permissive();
         App::new()
@@ -92,9 +99,8 @@ async fn main() -> std::io::Result<()> {
                     .cookie_http_only(true)
                     .cookie_domain(cookie_domain)
                     .cookie_name(USER_COOKIE_NAME.to_string())
-                    .cookie_same_site(SameSite::None)
-                    .cookie_secure(false)
-                    .session_lifecycle(PersistentSession::default().session_ttl(ONE_HOUR))
+                    .cookie_same_site(SameSite::Strict)
+                    .cookie_secure(COOKIE_SECURE)
                     .build(),
             )
             .wrap(middleware::NormalizePath::trim())
@@ -102,7 +108,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(state.clone())
             .app_data(state_token.clone())
     })
-    .bind(("0.0.0.0", port))?
+    .bind(("0.0.0.0", PORT))?
     .run()
     .await
 }

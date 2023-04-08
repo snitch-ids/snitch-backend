@@ -40,11 +40,15 @@ const ONE_HOUR: Duration = Duration::minutes(60);
 const USER_COOKIE_NAME: &str = "user_cookie";
 const PORT: u16 = 8081;
 
-#[cfg(debug_assertions)]
-const COOKIE_SECURE: bool = true;
-
 #[cfg(not(debug_assertions))]
+const COOKIE_SECURE: bool = true;
+#[cfg(not(debug_assertions))]
+const SAME_SITE: SameSite = SameSite::Strict;
+
+#[cfg(debug_assertions)]
 const COOKIE_SECURE: bool = false;
+#[cfg(debug_assertions)]
+const SAME_SITE: SameSite = SameSite::None;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -99,7 +103,7 @@ async fn main() -> std::io::Result<()> {
                     .cookie_http_only(true)
                     .cookie_domain(cookie_domain)
                     .cookie_name(USER_COOKIE_NAME.to_string())
-                    .cookie_same_site(SameSite::Strict)
+                    .cookie_same_site(SAME_SITE)
                     .cookie_secure(COOKIE_SECURE)
                     .build(),
             )

@@ -92,7 +92,6 @@ async fn main() -> std::io::Result<()> {
             .service(welcome)
             .service(get_messages_by_hostname)
             .service(get_message_hostnames)
-            .service(add_user)
             .service(get_user_by_id)
             .service(delete_user)
             .service(create_token)

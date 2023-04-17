@@ -1,4 +1,4 @@
-use crate::api::AppStateWithCounter;
+use crate::api::AppState;
 use crate::model::message::{MessageBackend, MessageToken};
 use crate::persistance::{MessageKey, PersistMessage};
 use actix_identity::Identity;
@@ -29,7 +29,7 @@ pub(crate) async fn add_message(
     auth: BearerAuth,
     message: web::Json<MessageBackend>,
     token_state: web::Data<TokenState>,
-    state: web::Data<AppStateWithCounter>,
+    state: web::Data<AppState>,
 ) -> Result<impl Responder, APIError> {
     let mut token_store = token_state.token.lock().await;
     let token: MessageToken = auth.token().trim().to_string();
@@ -58,7 +58,7 @@ pub(crate) async fn add_message(
 #[get("/messages/hostnames")]
 pub(crate) async fn get_message_hostnames(
     identity: Identity,
-    state: web::Data<AppStateWithCounter>,
+    state: web::Data<AppState>,
 ) -> Result<impl Responder, APIError> {
     let mut messages_state = state.messages.lock().await;
     let user_id: UserID = identity.id().unwrap().into();
@@ -75,7 +75,7 @@ pub(crate) async fn get_message_hostnames(
 pub(crate) async fn get_messages_by_hostname(
     identity: Identity,
     info: web::Json<MessageRequest>,
-    state: web::Data<AppStateWithCounter>,
+    state: web::Data<AppState>,
 ) -> Result<impl Responder, APIError> {
     info!("received request for {}", &info.hostname);
     let mut messages_state = state.messages.lock().await;

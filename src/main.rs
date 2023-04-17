@@ -21,7 +21,7 @@ use api::{
     registration::register,
     token::{create_token, get_token},
     users::{add_user, delete_user, get_user_by_id},
-    welcome, AppStateWithCounter,
+    welcome, AppState,
 };
 use log::error;
 
@@ -61,7 +61,7 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("failed to create redis service");
 
-    let state = Data::new(AppStateWithCounter {
+    let state = Data::new(AppState {
         messages: Mutex::new(db_service),
     });
 

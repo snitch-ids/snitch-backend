@@ -1,4 +1,4 @@
-use crate::AppStateWithCounter;
+use crate::AppState;
 use actix_identity::Identity;
 
 use crate::service::authentication::valid_hash;
@@ -33,7 +33,7 @@ pub struct LoginResponse {
 pub async fn login(
     req: actix_web::HttpRequest,
     login_request: web::Json<LoginRequest>,
-    state: Data<AppStateWithCounter>,
+    state: Data<AppState>,
 ) -> Result<impl Responder, APIError> {
     let login_request = login_request.into_inner();
     if let Err(e) = login_request.validate() {

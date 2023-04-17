@@ -1,4 +1,4 @@
-use crate::api::AppStateWithCounter;
+use crate::api::AppState;
 use crate::errors::APIError;
 use crate::errors::APIError::InternalServerError;
 use crate::model::user::{User, UserID};
@@ -28,7 +28,7 @@ pub struct AddUserRequest {
 #[get("/user")]
 pub async fn get_user_by_id(
     id: Identity,
-    state: web::Data<AppStateWithCounter>,
+    state: web::Data<AppState>,
 ) -> Result<impl Responder, APIError> {
     let user_id: UserID = id.id().unwrap().into();
     let mut users = state.messages.lock().await;
@@ -39,7 +39,7 @@ pub async fn get_user_by_id(
 
 #[post("/user")]
 pub(crate) async fn add_user(
-    state: web::Data<AppStateWithCounter>,
+    state: web::Data<AppState>,
     user: web::Json<AddUserRequest>,
 ) -> Result<impl Responder, APIError> {
     info!("add user");
@@ -54,7 +54,7 @@ pub(crate) async fn add_user(
 #[delete("/user")]
 pub(crate) async fn delete_user(
     id: Identity,
-    state: web::Data<AppStateWithCounter>,
+    state: web::Data<AppState>,
 ) -> Result<impl Responder, APIError> {
     let mut users = state.messages.lock().await;
     let user_id: UserID = id.id().unwrap().into();

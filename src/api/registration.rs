@@ -1,4 +1,4 @@
-use crate::api::AppStateWithCounter;
+use crate::api::AppState;
 use std::env;
 use std::fmt::format;
 use validator::{Validate, ValidationError};
@@ -30,7 +30,7 @@ pub struct RegistrationRequest {
 #[post("/register")]
 pub async fn register(
     register_request: web::Json<RegistrationRequest>,
-    state: Data<AppStateWithCounter>,
+    state: Data<AppState>,
 ) -> impl Responder {
     info!("register");
 
@@ -63,7 +63,7 @@ pub async fn register(
 #[get("/register/{nonce}")]
 pub async fn register_reply(
     nonce: web::Path<Nonce>,
-    state: Data<AppStateWithCounter>,
+    state: Data<AppState>,
 ) -> impl Responder {
     let nonce = nonce.into_inner();
     let mut users = state.messages.lock().await;

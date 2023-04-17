@@ -10,7 +10,7 @@ use tokio::sync::Mutex;
 
 use crate::persistance::redis::RedisDatabaseService;
 
-pub struct AppStateWithCounter {
+pub struct AppState {
     pub messages: Mutex<RedisDatabaseService>,
 }
 

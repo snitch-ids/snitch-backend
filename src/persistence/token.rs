@@ -6,7 +6,7 @@ use redis::{aio, AsyncCommands};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 
-use crate::persistance::redis::RedisDatabaseService;
+use crate::persistence::redis::RedisDatabaseService;
 use crate::service::token::random_alphanumeric_string;
 use async_trait::async_trait;
 use tokio::sync::Mutex;

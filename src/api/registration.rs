@@ -61,10 +61,7 @@ pub async fn register(
 }
 
 #[get("/register/{nonce}")]
-pub async fn register_reply(
-    nonce: web::Path<Nonce>,
-    state: Data<AppState>,
-) -> impl Responder {
+pub async fn register_reply(nonce: web::Path<Nonce>, state: Data<AppState>) -> impl Responder {
     let nonce = nonce.into_inner();
     let mut users = state.messages.lock().await;
     users.confirm_user_pending(&nonce).await.unwrap();

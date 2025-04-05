@@ -1,6 +1,6 @@
 use crate::errors::APIError;
 use crate::model::user::UserID;
-use crate::persistance::token::TokenState;
+use crate::persistence::token::TokenState;
 use actix_identity::Identity;
 use actix_web::{get, web, Responder};
 use log::info;

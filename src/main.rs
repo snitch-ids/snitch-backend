@@ -2,14 +2,14 @@ mod api;
 mod errors;
 mod intentory;
 mod model;
-mod persistance;
+mod persistence;
 mod service;
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
 
-use actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware};
+use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 
-use crate::persistance::token::TokenState;
+use crate::persistence::token::TokenState;
 use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, SameSite};
 
@@ -26,7 +26,7 @@ use api::{
 use log::error;
 
 use crate::api::registration::register_reply;
-use persistance::redis::RedisDatabaseService;
+use persistence::redis::RedisDatabaseService;
 use serde::{Deserialize, Serialize};
 
 use crate::api::messages::get_message_hostnames;

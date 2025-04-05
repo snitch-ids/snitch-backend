@@ -8,7 +8,7 @@ use actix_web::{get, Responder};
 use log::debug;
 use tokio::sync::Mutex;
 
-use crate::persistance::redis::RedisDatabaseService;
+use crate::persistence::redis::RedisDatabaseService;
 
 pub struct AppState {
     pub messages: Mutex<RedisDatabaseService>,

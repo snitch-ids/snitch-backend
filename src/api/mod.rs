@@ -17,5 +17,5 @@ pub struct AppState {
 #[get("/")]
 pub(crate) async fn welcome() -> impl Responder {
     debug!("welcome request");
-    "welcome".to_string()
+    "welcome"
 }

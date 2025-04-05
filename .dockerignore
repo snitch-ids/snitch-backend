@@ -1,4 +1,6 @@
 *.env
 .git
 target
+docker
+Dockerfile
 .idea

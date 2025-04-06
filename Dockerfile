@@ -3,7 +3,7 @@ FROM rust:latest AS builder
 EXPOSE 8081
 
 WORKDIR snitch-backend
-RUN apt update -y && apt install vim libclang-dev -y
+RUN apt update -y && apt install libclang-dev clang llvm-dev -y --no-install-recommends
 COPY . .
 RUN cargo build --release
 

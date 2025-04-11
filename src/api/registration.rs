@@ -40,8 +40,7 @@ pub async fn register(
     }
 
     let nonce = random_alphanumeric_string(40);
-    let backend_url = env::var("SNITCH_BACKEND_URL").expect("SNITCH_BACKEND_URL not defined");
-    let activation_link = Url::parse(&format!("{backend_url}/register/{nonce}")).unwrap();
+    let activation_link = Url::parse(&format!("{}/register/{nonce}", state.backend_url)).unwrap();
     let mail = generate_registration_mail("", &activation_link);
 
     let mut users = state.messages.lock().await;

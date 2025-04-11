@@ -4,8 +4,11 @@ mod intentory;
 mod model;
 mod persistence;
 mod service;
+
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
+use std::fmt::format;
+use std::str::FromStr;
 
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 
@@ -13,6 +16,7 @@ use crate::persistence::token::TokenState;
 use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, SameSite};
 
+use crate::api::registration::register_reply;
 use actix_web::web::Data;
 use actix_web::{middleware, App, HttpServer};
 use api::{
@@ -24,9 +28,8 @@ use api::{
     welcome, AppState,
 };
 use log::error;
-
-use crate::api::registration::register_reply;
 use persistence::redis::RedisDatabaseService;
+use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 use crate::api::messages::get_message_hostnames;
@@ -61,8 +64,12 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("failed to create redis service");
 
+    let backend_url = std::env::var("SNITCH_BACKEND_URL")
+        .expect("environment variable SNITCH_BACKEND_URL undefined");
     let state = Data::new(AppState {
         messages: Mutex::new(db_service),
+        backend_url: Url::from_str(&*backend_url)
+            .expect(&format!("failed to parse as url: {backend_url}")),
     });
 
     let db_token_service = RedisDatabaseService::new()

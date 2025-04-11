@@ -6,12 +6,15 @@ pub mod users;
 
 use actix_web::{get, Responder};
 use log::debug;
+use reqwest::Url;
+use std::cell::OnceCell;
 use tokio::sync::Mutex;
 
 use crate::persistence::redis::RedisDatabaseService;
 
 pub struct AppState {
     pub messages: Mutex<RedisDatabaseService>,
+    pub backend_url: Url,
 }
 
 #[get("/")]

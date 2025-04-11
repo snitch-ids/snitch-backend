@@ -79,7 +79,7 @@ impl RedisDatabaseService {
         let key = format!("user_pending:{nonce}");
         self.connection.json_set(&key, "$", &json!(user)).await?;
         self.connection
-            .expire(&key, TTL::PendingUser as usize)
+            .expire(&key, TTL::PendingUser as i64)
             .await?;
         Ok(())
     }
@@ -142,7 +142,7 @@ impl PersistMessage for RedisDatabaseService {
         let key = key.to_redis_key();
         let _: () = self.connection.rpush(&key, message).await?;
         info!("storing in database: {:?}... finished", message);
-        self.connection.expire(&key, TTL::Message as usize).await?;
+        self.connection.expire(&key, TTL::Message as i64).await?;
 
         Ok(())
     }

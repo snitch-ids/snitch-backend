@@ -2,13 +2,13 @@ use crate::AppState;
 use actix_identity::Identity;
 
 use crate::service::authentication::valid_hash;
-use validator::{Validate, ValidationError};
+use validator::Validate;
 
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{error, get, post, web, HttpMessage, Responder};
 
-use actix_web_lab::web::Redirect;
+use actix_web::web::Redirect;
 
 use crate::errors::APIError;
 use log::{debug, info};

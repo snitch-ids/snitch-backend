@@ -63,11 +63,13 @@ pub async fn register(
 pub async fn register_reply(nonce: web::Path<Nonce>, state: Data<AppState>) -> impl Responder {
     let nonce = nonce.into_inner();
     let mut users = state.messages.lock().await;
-    users.confirm_user_pending(&nonce).await.unwrap();
-    let reply_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
+    let _ = users
+        .confirm_user_pending(&nonce)
+        .await
+        .inspect_err(|x| error!("{}", x));
 
     HttpResponse::Found()
-        .append_header(("Location", reply_url))
+        .append_header(("Location", state.reply_url.as_str()))
         .finish()
 }
 

@@ -7,6 +7,7 @@ mod service;
 
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
+use std::env;
 use std::fmt::format;
 use std::str::FromStr;
 
@@ -64,12 +65,16 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("failed to create redis service");
 
-    let backend_url = std::env::var("SNITCH_BACKEND_URL")
-        .expect("environment variable SNITCH_BACKEND_URL undefined");
+    let backend_url =
+        env::var("SNITCH_BACKEND_URL").expect("environment variable SNITCH_BACKEND_URL undefined");
+    let reply_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
+
     let state = Data::new(AppState {
         messages: Mutex::new(db_service),
         backend_url: Url::from_str(&*backend_url)
             .expect(&format!("failed to parse as url: {backend_url}")),
+        reply_url: Url::from_str(&*reply_url)
+            .expect(&format!("failed to parse as url: {reply_url}")),
     });
 
     let db_token_service = RedisDatabaseService::new()

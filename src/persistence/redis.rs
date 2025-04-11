@@ -85,20 +85,20 @@ impl RedisDatabaseService {
     }
 
     pub async fn confirm_user_pending(&mut self, nonce: &Nonce) -> Result<()> {
-        let user = self.get_user_pending(nonce).await;
+        let user = self.get_user_pending(nonce).await?;
         self.add_user(&user).await;
         self.delete_user_pending(nonce).await;
-        info!("confirmed {}", user);
+        info!("confirmed {:?}", user);
         Ok(())
     }
 
-    pub async fn get_user_pending(&mut self, nonce: &Nonce) -> User {
+    pub async fn get_user_pending(&mut self, nonce: &Nonce) -> Result<User> {
+        info!("get pending user. nonce: {nonce}");
         let user_str: String = self
             .connection
             .json_get(format!("user_pending:{nonce}"), ".")
-            .await
-            .unwrap();
-        serde_json::from_str(&user_str).unwrap() // impl FromStr
+            .await?;
+        Ok(serde_json::from_str(&user_str)?)
     }
 
     pub async fn delete_user_pending(&mut self, nonce: &Nonce) {

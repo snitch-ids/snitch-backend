@@ -8,7 +8,7 @@ include = ["/src/service/templates/*.html"]
 name = "snitch-backend"
 
 [dependencies]
-actix-web = "4.1.0"
+actix-web = "4.10.2"
 actix-web-lab = "0.18.9"
 actix-identity = "0.5.2"
 actix-session = {version="0.7.2", features=["redis-rs-session", "cookie-session"]}

@@ -1917,6 +1917,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "needs_env_var"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1af03b7948cc130ddd5545479090c4457241d22ea051207886b9aa706ae7f4c9"
+dependencies = [
+ "quote 1.0.40",
+ "syn 2.0.100",
+]
+
+[[package]]
 name = "nom"
 version = "4.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2933,6 +2943,7 @@ dependencies = [
  "lazy_static",
  "lettre",
  "log",
+ "needs_env_var",
  "rand 0.8.5",
  "redis 0.29.5",
  "reqwest",

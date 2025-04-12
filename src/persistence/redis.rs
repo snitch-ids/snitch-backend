@@ -2,6 +2,7 @@ use crate::errors::APIInternalError;
 use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
 use crate::persistence::{MessageKey, PersistMessage};
+use std::env;
 
 use anyhow::{Error, Ok, Result};
 use async_trait::async_trait;
@@ -10,6 +11,7 @@ use log::{debug, info};
 use redis::JsonAsyncCommands;
 use redis::{aio, RedisError};
 use redis::{AsyncCommands, FromRedisValue};
+use reqwest::Url;
 use serde::Serialize;
 use serde_json::json;
 
@@ -29,11 +31,11 @@ enum TTL {
 
 impl RedisDatabaseService {
     pub async fn new() -> Result<Self> {
-        let url = std::env::var("SNITCH_REDIS_URL").expect("SNITCH_REDIS_URL not defined");
+        let url = env::var("SNITCH_REDIS_URL").expect("SNITCH_REDIS_URL not defined");
         info!("connecting to redis {}", url);
 
         let password =
-            std::env::var("SNITCH_REDIS_PASSWORD").expect("SNITCH_REDIS_PASSWORD not defined");
+            env::var("SNITCH_REDIS_PASSWORD").expect("SNITCH_REDIS_PASSWORD not defined");
         let url = format!("redis://:{}@{}", password, url);
         debug!("connecting to {url}");
         let client = redis::Client::open(url)?;

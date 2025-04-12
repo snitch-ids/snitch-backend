@@ -28,7 +28,7 @@ use api::{
     users::{add_user, delete_user, get_user_by_id},
     welcome, AppState,
 };
-use log::error;
+use log::{error, info};
 use persistence::redis::RedisDatabaseService;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};

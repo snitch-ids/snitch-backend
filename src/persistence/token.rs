@@ -66,28 +66,34 @@ impl TokenState {
     }
 }
 
-#[tokio::test]
-async fn test_token_store() {
-    let db = RedisDatabaseService::new().await.unwrap();
-    let mut store = TokenStore {
-        connection: db.connection,
-    };
-    let user_id = UserID::new();
-    store.create_token_for_user_id(&user_id);
-    store.create_token_for_user_id(&user_id);
-    let retrieved = store.get_token_of_user_id(&user_id);
-    // assert_eq!(retrieved.unwrap().len(), 2);
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use needs_env_var::needs_env_var;
 
-#[tokio::test]
-async fn test_user_id_of_token() {
-    let db = RedisDatabaseService::new().await.unwrap();
-    let mut store = TokenStore {
-        connection: db.connection,
-    };
+    #[tokio::test]
+    async fn test_token_store() {
+        let db = RedisDatabaseService::new().await.unwrap();
+        let mut store = TokenStore {
+            connection: db.connection,
+        };
+        let user_id = UserID::new();
+        store.create_token_for_user_id(&user_id);
+        store.create_token_for_user_id(&user_id);
+        let retrieved = store.get_token_of_user_id(&user_id);
+        // assert_eq!(retrieved.unwrap().len(), 2);
+    }
 
-    let user_id = UserID::new();
-    store.create_token_for_user_id(&user_id);
-    let token = store.create_token_for_user_id(&user_id);
-    // assert_eq!(&user_id, store.get_user_id_of_token(&token).unwrap());
+    #[tokio::test]
+    async fn test_user_id_of_token() {
+        let db = RedisDatabaseService::new().await.unwrap();
+        let mut store = TokenStore {
+            connection: db.connection,
+        };
+
+        let user_id = UserID::new();
+        store.create_token_for_user_id(&user_id);
+        let token = store.create_token_for_user_id(&user_id);
+        // assert_eq!(&user_id, store.get_user_id_of_token(&token).unwrap());
+    }
 }

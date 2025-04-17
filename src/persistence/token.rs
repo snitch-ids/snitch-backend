@@ -48,8 +48,8 @@ impl TokenStore {
             .connection
             .hget(key_token_to_user_id, "user_id")
             .await
-            .map_err(|e| error!("{e}"))
-            .unwrap();
+            .inspect_err(|e| error!("{e}"))
+            .ok()?;
         UserID::from_str(&result).ok()
     }
 }

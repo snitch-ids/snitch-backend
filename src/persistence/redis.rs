@@ -17,7 +17,7 @@ use serde_json::json;
 
 pub struct RedisDatabaseService {
     pub client: redis::Client,
-    pub connection: aio::Connection,
+    pub connection: aio::MultiplexedConnection,
 }
 
 const MAX_MESSAGES: isize = 1000;
@@ -39,7 +39,7 @@ impl RedisDatabaseService {
         let url = format!("redis://:{}@{}", password, url);
         debug!("connecting to {url}");
         let client = redis::Client::open(url)?;
-        let connection = client.get_async_connection().await?;
+        let connection = client.get_multiplexed_async_connection().await?;
         Ok(RedisDatabaseService { client, connection })
     }
 

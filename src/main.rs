@@ -125,7 +125,6 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-
 fn setup_cors() -> Cors {
     #[cfg(debug_assertions)]
     let cors = Cors::permissive();

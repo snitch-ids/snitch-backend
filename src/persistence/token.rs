@@ -1,24 +1,22 @@
 use crate::model::message::MessageToken;
 use crate::model::user::{User, UserID};
 
-use log::{error, info};
-use redis::{aio, AsyncCommands};
-use std::collections::{HashMap, HashSet};
-use std::str::FromStr;
-
-use crate::persistence::redis::RedisDatabaseService;
 use crate::service::token::random_alphanumeric_string;
-use async_trait::async_trait;
+use log::{error, info};
+use redis::aio::MultiplexedConnection;
+use redis::{aio, AsyncCommands};
+use std::str::FromStr;
 use tokio::sync::Mutex;
 
 const TOKEN_LENGTH: u32 = 32;
 
 pub struct TokenStore {
-    pub connection: aio::Connection,
+    pub connection: MultiplexedConnection,
 }
 
 impl TokenStore {
     pub async fn create_token_for_user_id(&mut self, user_id: &UserID) -> MessageToken {
+        info!("create token for user_id {}", user_id);
         let token: String = random_alphanumeric_string(TOKEN_LENGTH);
         let key_user_id_to_token: String = format!("user_id_to_token:{user_id}");
         let _: u8 = self
@@ -59,7 +57,7 @@ pub struct TokenState {
 }
 
 impl TokenState {
-    pub fn new(connection: aio::Connection) -> TokenState {
+    pub fn new(connection: MultiplexedConnection) -> TokenState {
         Self {
             token: Mutex::new(TokenStore { connection }),
         }

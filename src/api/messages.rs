@@ -55,7 +55,7 @@ pub(crate) async fn add_message(
     Ok("success".to_string())
 }
 
-#[get("/messages/hostnames")]
+#[get("/hostnames")]
 pub(crate) async fn get_message_hostnames(
     identity: Identity,
     state: web::Data<AppState>,
@@ -71,19 +71,17 @@ pub(crate) async fn get_message_hostnames(
     Ok(web::Json(hostnames))
 }
 
-#[post("/messages/all")]
+#[get("/messages/{hostname}")]
 pub(crate) async fn get_messages_by_hostname(
+    path: web::Path<String>,
     identity: Identity,
-    info: web::Json<MessageRequest>,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, APIError> {
-    info!("received request for {}", &info.hostname);
-    let mut messages_state = state.messages.lock().await;
+    let hostname = path.into_inner();
+    info!("received request for {}", &hostname);
     let user_id: UserID = identity.id().unwrap().into();
-    let key = MessageKey {
-        user_id,
-        hostname: info.hostname.clone(),
-    };
+    let key = MessageKey { user_id, hostname };
+    let mut messages_state = state.messages.lock().await;
     let messages: Vec<MessageBackend> = messages_state
         .find_messages(&key)
         .await

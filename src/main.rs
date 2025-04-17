@@ -18,6 +18,7 @@ use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, SameSite};
 
 use crate::api::registration::register_reply;
+use actix_web::http::header;
 use actix_web::web::Data;
 use actix_web::{middleware, App, HttpServer};
 use api::{
@@ -48,7 +49,7 @@ const PORT: u16 = 8081;
 const SAME_SITE: SameSite = SameSite::Strict;
 
 #[cfg(debug_assertions)]
-const SAME_SITE: SameSite = SameSite::None;
+const SAME_SITE: SameSite = SameSite::Lax;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -87,8 +88,8 @@ async fn main() -> std::io::Result<()> {
                 std::process::exit(1)
             })
             .ok();
+        let cors = setup_cors();
 
-        let cors = Cors::permissive();
         App::new()
             .wrap(cors)
             .service(add_message)
@@ -122,4 +123,18 @@ async fn main() -> std::io::Result<()> {
     .bind(("0.0.0.0", PORT))?
     .run()
     .await
+}
+
+
+fn setup_cors() -> Cors {
+    #[cfg(debug_assertions)]
+    let cors = Cors::permissive();
+    #[cfg(not(debug_assertions))]
+    let cors = Cors::default()
+        .allowed_origins(vec!["https://api.snitch.cool", "https://snitch.cool"])
+        .allowed_methods(vec!["GET", "POST"])
+        .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+        .allowed_header(header::CONTENT_TYPE)
+        .max_age(3600);
+    cors
 }

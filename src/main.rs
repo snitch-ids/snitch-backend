@@ -45,12 +45,8 @@ const USER_COOKIE_NAME: &str = "user_cookie";
 const PORT: u16 = 8081;
 
 #[cfg(not(debug_assertions))]
-const COOKIE_SECURE: bool = true;
-#[cfg(not(debug_assertions))]
 const SAME_SITE: SameSite = SameSite::Strict;
 
-#[cfg(debug_assertions)]
-const COOKIE_SECURE: bool = false;
 #[cfg(debug_assertions)]
 const SAME_SITE: SameSite = SameSite::None;
 
@@ -115,7 +111,7 @@ async fn main() -> std::io::Result<()> {
                     .cookie_domain(cookie_domain)
                     .cookie_name(USER_COOKIE_NAME.to_string())
                     .cookie_same_site(SAME_SITE)
-                    .cookie_secure(COOKIE_SECURE)
+                    .cookie_secure(true)
                     .build(),
             )
             .wrap(middleware::NormalizePath::trim())

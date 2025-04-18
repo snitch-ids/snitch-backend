@@ -23,7 +23,7 @@ env:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: snitch
     permissions:
       contents: read
       packages: write

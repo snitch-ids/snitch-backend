@@ -46,7 +46,7 @@ pub async fn login(
     if let Some(user) = users.get_user_by_email(email).await {
         if valid_hash(&user.password_hash, &login_request.password) {
             Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
-            return Ok("success");
+            return Ok(user.email);
         }
     }
 

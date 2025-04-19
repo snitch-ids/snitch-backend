@@ -1,12 +1,11 @@
 use crate::api::AppState;
 use crate::errors::APIError;
-use crate::errors::APIError::InternalServerError;
 use crate::model::user::{User, UserID};
 use crate::service::authentication::hash_password;
 use crate::{Deserialize, Serialize};
 use actix_identity::Identity;
 use actix_web::{delete, get, post, web, Responder};
-use log::{error, info};
+use log::info;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct UserResponse {
@@ -69,6 +68,6 @@ mod tests {
 
     #[test]
     fn test_user_response() {
-        UserResponse::from(User::example());
+        let _ = UserResponse::from(User::example());
     }
 }

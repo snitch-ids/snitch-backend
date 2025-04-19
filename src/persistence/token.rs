@@ -1,11 +1,11 @@
 use crate::model::message::MessageToken;
-use crate::model::user::{User, UserID};
+use crate::model::user::UserID;
 
 use crate::errors::APIError;
 use crate::service::token::random_alphanumeric_string;
 use log::{error, info};
 use redis::aio::MultiplexedConnection;
-use redis::{aio, AsyncCommands, RedisError};
+use redis::AsyncCommands;
 use std::str::FromStr;
 use tokio::sync::Mutex;
 
@@ -30,7 +30,7 @@ impl TokenStore {
         let key_token_to_user_id: String = format!("token_to_user_id:{token}");
         let _: u8 = self
             .connection
-            .hset(key_token_to_user_id, "user_id", &user_id.to_string())
+            .hset(key_token_to_user_id, "user_id", user_id.to_string())
             .await
             .expect("failed adding token");
         token
@@ -90,7 +90,6 @@ impl TokenState {
 mod tests {
     use super::*;
     use crate::RedisDatabaseService;
-    use needs_env_var::needs_env_var;
 
     #[tokio::test]
     async fn test_token_store() {
@@ -99,10 +98,10 @@ mod tests {
             connection: db.connection,
         };
         let user_id = UserID::new();
-        store.create_token_for_user_id(&user_id);
-        store.create_token_for_user_id(&user_id);
-        let retrieved = store.get_token_of_user_id(&user_id);
-        // assert_eq!(retrieved.unwrap().len(), 2);
+        let _ = store.create_token_for_user_id(&user_id).await;
+        let _ = store.create_token_for_user_id(&user_id).await;
+        let token_list = store.get_token_of_user_id(&user_id).await.unwrap();
+        assert_eq!(token_list.len(), 2);
     }
 
     #[tokio::test]
@@ -113,8 +112,7 @@ mod tests {
         };
 
         let user_id = UserID::new();
-        store.create_token_for_user_id(&user_id);
-        let token = store.create_token_for_user_id(&user_id);
-        // assert_eq!(&user_id, store.get_user_id_of_token(&token).unwrap());
+        let token = store.create_token_for_user_id(&user_id).await;
+        assert_eq!(user_id, store.get_user_id_of_token(&token).await.unwrap());
     }
 }

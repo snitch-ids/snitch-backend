@@ -8,17 +8,14 @@ mod service;
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
 use std::env;
-use std::fmt::format;
 use std::str::FromStr;
 
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 
 use crate::persistence::token::TokenState;
-use actix_web::cookie::time::Duration;
 use actix_web::cookie::{Key, SameSite};
 
 use crate::api::registration::register_reply;
-use actix_web::http::header;
 use actix_web::web::Data;
 use actix_web::{middleware, App, HttpServer};
 use api::{
@@ -26,10 +23,10 @@ use api::{
     messages::{add_message, get_messages_by_hostname},
     registration::register,
     token::{create_token, get_token},
-    users::{add_user, delete_user, get_user_by_id},
+    users::{delete_user, get_user_by_id},
     welcome, AppState,
 };
-use log::{error, info};
+use log::error;
 use persistence::redis::RedisDatabaseService;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
@@ -42,7 +39,6 @@ fn get_secret_key() -> Key {
     Key::generate()
 }
 
-const ONE_HOUR: Duration = Duration::minutes(60);
 const USER_COOKIE_NAME: &str = "user_cookie";
 const PORT: u16 = 8081;
 
@@ -69,10 +65,10 @@ async fn main() -> std::io::Result<()> {
 
     let state = Data::new(AppState {
         messages: Mutex::new(db_service),
-        backend_url: Url::from_str(&*backend_url)
-            .expect(&format!("failed to parse as url: {backend_url}")),
-        reply_url: Url::from_str(&*reply_url)
-            .expect(&format!("failed to parse as url: {reply_url}")),
+        backend_url: Url::from_str(&backend_url)
+            .unwrap_or_else(|_| panic!("failed to parse as url: {backend_url}")),
+        reply_url: Url::from_str(&reply_url)
+            .unwrap_or_else(|_| panic!("failed to parse as url: {reply_url}")),
     });
 
     let db_token_service = RedisDatabaseService::new()

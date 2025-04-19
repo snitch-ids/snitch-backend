@@ -8,11 +8,9 @@ use anyhow::{Error, Ok, Result};
 use async_trait::async_trait;
 
 use log::{debug, info};
+use redis::aio;
 use redis::JsonAsyncCommands;
-use redis::{aio, RedisError};
 use redis::{AsyncCommands, FromRedisValue};
-use reqwest::Url;
-use serde::Serialize;
 use serde_json::json;
 
 pub struct RedisDatabaseService {

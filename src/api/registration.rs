@@ -1,7 +1,5 @@
 use crate::api::AppState;
-use std::env;
-use std::fmt::format;
-use validator::{Validate, ValidationError};
+use validator::Validate;
 
 use actix_web::web::Data;
 use actix_web::{post, HttpResponse};
@@ -80,7 +78,7 @@ mod test {
 
     #[test]
     fn test_validation() {
-        let invalid_registrations = vec![
+        let invalid_registrations = [
             RegistrationRequest {
                 email: "".to_string(),
                 password: "".to_string(),

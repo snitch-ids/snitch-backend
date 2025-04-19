@@ -1,6 +1,6 @@
 use crate::model::user::User;
 use actix_web::{error::ResponseError, HttpResponse};
-use derive_more::{Display, Error};
+use derive_more::Display;
 use std::error::Error;
 
 #[derive(Debug, Display)]

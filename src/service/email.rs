@@ -80,7 +80,7 @@ async fn test_email_client() {
         "Bob",
         &Url::parse("https://snitch.cool/register/isdjfolisjdflijs").unwrap(),
     );
-    send_registration_mail(test_message, test_recipient.parse().unwrap()).await;
+    assert!(send_registration_mail(test_message, test_recipient.parse().unwrap()).await.is_ok());
 }
 
 #[test]

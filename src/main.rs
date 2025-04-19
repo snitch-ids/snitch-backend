@@ -35,6 +35,7 @@ use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 use crate::api::messages::get_message_hostnames;
+use crate::api::token::delete_token;
 use tokio::sync::Mutex;
 
 fn get_secret_key() -> Key {
@@ -92,19 +93,20 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
+            .service(welcome)
             .service(add_message)
             .service(register)
             .service(register_reply)
             .service(login)
             .service(logout)
             .service(index)
-            .service(welcome)
             .service(get_messages_by_hostname)
             .service(get_message_hostnames)
             .service(get_user_by_id)
             .service(delete_user)
             .service(create_token)
             .service(get_token)
+            .service(delete_token)
             .wrap(IdentityMiddleware::default())
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())

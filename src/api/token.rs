@@ -1,12 +1,12 @@
 use crate::errors::APIError;
+use crate::model::message::MessageToken;
 use crate::model::user::UserID;
 use crate::persistence::token::TokenState;
 use actix_identity::Identity;
-use actix_web::{get, web, Responder};
+use actix_web::{delete, get, post, web, Responder};
 use log::info;
-use std::collections::HashSet;
 
-#[get("/token/new")]
+#[post("/token")]
 pub(crate) async fn create_token(
     id: Identity,
     token_state: web::Data<TokenState>,
@@ -31,4 +31,16 @@ pub(crate) async fn get_token(
     } else {
         Ok(web::Json(vec![]))
     }
+}
+
+#[delete("/token/{token}")]
+pub(crate) async fn delete_token(
+    path: web::Path<MessageToken>,
+    _id: Identity,
+    token_state: web::Data<TokenState>,
+) -> Result<impl Responder, APIError> {
+    info!("delete token request");
+    let mut tokens = token_state.token.lock().await;
+    tokens.delete_token(&path.into_inner()).await?;
+    Ok("success")
 }

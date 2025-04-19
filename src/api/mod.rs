@@ -14,7 +14,7 @@ use crate::persistence::redis::RedisDatabaseService;
 pub struct AppState {
     pub messages: Mutex<RedisDatabaseService>,
     pub backend_url: Url,
-    pub reply_url: Url,
+    pub frontend_url: Url,
 }
 
 #[get("/")]

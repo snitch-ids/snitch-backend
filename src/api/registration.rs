@@ -67,7 +67,7 @@ pub async fn register_reply(nonce: web::Path<Nonce>, state: Data<AppState>) -> i
         .inspect_err(|x| error!("{}", x));
 
     HttpResponse::Found()
-        .append_header(("Location", state.reply_url.as_str()))
+        .append_header(("Location", state.frontend_url.as_str()))
         .finish()
 }
 

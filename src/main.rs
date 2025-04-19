@@ -43,6 +43,9 @@ const USER_COOKIE_NAME: &str = "user_cookie";
 const PORT: u16 = 8081;
 
 #[cfg(not(debug_assertions))]
+use actix_web::http::header;
+
+#[cfg(not(debug_assertions))]
 const SAME_SITE: SameSite = SameSite::Strict;
 
 #[cfg(debug_assertions)]
@@ -61,14 +64,14 @@ async fn main() -> std::io::Result<()> {
 
     let backend_url =
         env::var("SNITCH_BACKEND_URL").expect("environment variable SNITCH_BACKEND_URL undefined");
-    let reply_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
+    let frontend_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
 
     let state = Data::new(AppState {
         messages: Mutex::new(db_service),
         backend_url: Url::from_str(&backend_url)
             .unwrap_or_else(|_| panic!("failed to parse as url: {backend_url}")),
-        reply_url: Url::from_str(&reply_url)
-            .unwrap_or_else(|_| panic!("failed to parse as url: {reply_url}")),
+        frontend_url: Url::from_str(&frontend_url)
+            .unwrap_or_else(|_| panic!("failed to parse as url: {frontend_url}")),
     });
 
     let db_token_service = RedisDatabaseService::new()
@@ -85,7 +88,7 @@ async fn main() -> std::io::Result<()> {
                 std::process::exit(1)
             })
             .ok();
-        let cors = setup_cors();
+        let cors = setup_cors(&frontend_url, &backend_url);
 
         App::new()
             .wrap(cors)
@@ -123,13 +126,14 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-fn setup_cors() -> Cors {
+fn setup_cors(frontend_url: &str, backend_url: &str) -> Cors {
     #[cfg(debug_assertions)]
     let cors = Cors::permissive();
     #[cfg(not(debug_assertions))]
     let cors = Cors::default()
-        .allowed_origins(vec!["https://api.snitch.cool", "https://snitch.cool"])
-        .allowed_methods(vec!["GET", "POST"])
+        .allowed_origin(frontend_url)
+        .allowed_origin(backend_url)
+        .allowed_methods(vec!["GET", "POST", "DELETE"])
         .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
         .allowed_header(header::CONTENT_TYPE)
         .max_age(3600);

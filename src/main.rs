@@ -134,7 +134,11 @@ fn setup_cors(frontend_url: &str, backend_url: &str) -> Cors {
         .allowed_origin(frontend_url)
         .allowed_origin(backend_url)
         .allowed_methods(vec!["GET", "POST", "DELETE"])
-        .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+        .allowed_headers(vec![
+            header::AUTHORIZATION,
+            header::ACCEPT,
+            header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
+        ])
         .allowed_header(header::CONTENT_TYPE)
         .max_age(3600);
     cors

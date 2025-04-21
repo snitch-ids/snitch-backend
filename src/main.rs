@@ -87,6 +87,17 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
+            .wrap(IdentityMiddleware::default())
+            .wrap(
+                SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
+                    .cookie_http_only(true)
+                    .cookie_domain(cookie_domain)
+                    .cookie_path("/".into())
+                    .cookie_name(USER_COOKIE_NAME.to_string())
+                    .cookie_same_site(SAME_SITE)
+                    .cookie_secure(true)
+                    .build(),
+            )
             .service(welcome)
             .service(add_message)
             .service(register)
@@ -101,17 +112,6 @@ async fn main() -> std::io::Result<()> {
             .service(create_token)
             .service(get_token)
             .service(delete_token)
-            .wrap(IdentityMiddleware::default())
-            .wrap(
-                SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
-                    .cookie_http_only(true)
-                    .cookie_domain(cookie_domain)
-                    .cookie_path("/".into())
-                    .cookie_name(USER_COOKIE_NAME.to_string())
-                    .cookie_same_site(SAME_SITE)
-                    .cookie_secure(true)
-                    .build(),
-            )
             .wrap(middleware::NormalizePath::trim())
             .wrap(middleware::Logger::default())
             .app_data(state.clone())

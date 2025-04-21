@@ -39,7 +39,7 @@ fn get_secret_key() -> Key {
     Key::generate()
 }
 
-const USER_COOKIE_NAME: &str = "user_cookie";
+const USER_COOKIE_NAME: &str = "__Host-snitch-user";
 const PORT: u16 = 8081;
 
 use actix_web::http::header;

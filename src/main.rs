@@ -39,12 +39,12 @@ fn get_secret_key() -> Key {
     Key::generate()
 }
 
-const USER_COOKIE_NAME: &str = "__Host-snitch-user";
+const USER_COOKIE_NAME: &str = "snitch-user";
 const PORT: u16 = 8081;
 
 use actix_web::http::header;
 
-const SAME_SITE: SameSite = SameSite::Lax;
+const SAME_SITE: SameSite = SameSite::Strict;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

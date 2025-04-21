@@ -42,7 +42,6 @@ fn get_secret_key() -> Key {
 const USER_COOKIE_NAME: &str = "user_cookie";
 const PORT: u16 = 8081;
 
-#[cfg(not(debug_assertions))]
 use actix_web::http::header;
 
 const SAME_SITE: SameSite = SameSite::Lax;
@@ -107,6 +106,7 @@ async fn main() -> std::io::Result<()> {
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
                     .cookie_http_only(true)
                     .cookie_domain(cookie_domain)
+                    .cookie_path("/".into())
                     .cookie_name(USER_COOKIE_NAME.to_string())
                     .cookie_same_site(SAME_SITE)
                     .cookie_secure(true)
@@ -123,9 +123,6 @@ async fn main() -> std::io::Result<()> {
 }
 
 fn setup_cors(frontend_url: &str, backend_url: &str) -> Cors {
-    #[cfg(debug_assertions)]
-    let cors = Cors::permissive();
-    #[cfg(not(debug_assertions))]
     let cors = Cors::default()
         .allowed_origin(frontend_url)
         .allowed_origin(backend_url)
@@ -134,8 +131,10 @@ fn setup_cors(frontend_url: &str, backend_url: &str) -> Cors {
             header::AUTHORIZATION,
             header::ACCEPT,
             header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
+            header::SET_COOKIE,
+            header::CONTENT_TYPE
         ])
-        .allowed_header(header::CONTENT_TYPE)
+        .supports_credentials()
         .max_age(3600);
     cors
 }

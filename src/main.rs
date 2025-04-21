@@ -45,10 +45,6 @@ const PORT: u16 = 8081;
 #[cfg(not(debug_assertions))]
 use actix_web::http::header;
 
-#[cfg(not(debug_assertions))]
-const SAME_SITE: SameSite = SameSite::Strict;
-
-#[cfg(debug_assertions)]
 const SAME_SITE: SameSite = SameSite::Lax;
 
 #[actix_web::main]

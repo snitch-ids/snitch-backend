@@ -16,7 +16,7 @@ use crate::persistence::token::TokenState;
 use actix_web::cookie::{Key, SameSite};
 
 use crate::api::registration::register_reply;
-use actix_web::web::Data;
+use actix_web::web::{head, Data};
 use actix_web::{middleware, App, HttpServer};
 use api::{
     authentication::{index, login, logout},
@@ -126,14 +126,15 @@ fn setup_cors(frontend_url: &str, backend_url: &str) -> Cors {
     let cors = Cors::default()
         .allowed_origin(frontend_url)
         .allowed_origin(backend_url)
-        .allowed_methods(vec!["GET", "POST", "DELETE"])
+        .allowed_methods(vec!["GET", "POST", "DELETE", "OPTIONS"])
         .allowed_headers(vec![
             header::AUTHORIZATION,
             header::ACCEPT,
             header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
-            header::SET_COOKIE,
+            header::COOKIE,
             header::CONTENT_TYPE
         ])
+        .expose_headers(vec![header::SET_COOKIE])
         .supports_credentials()
         .max_age(3600);
     cors

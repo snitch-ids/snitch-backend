@@ -14,7 +14,6 @@ use redis::{AsyncCommands, FromRedisValue};
 use serde_json::json;
 
 pub struct RedisDatabaseService {
-    pub client: redis::Client,
     pub connection: aio::MultiplexedConnection,
 }
 
@@ -38,7 +37,7 @@ impl RedisDatabaseService {
         debug!("connecting to {url}");
         let client = redis::Client::open(url)?;
         let connection = client.get_multiplexed_async_connection().await?;
-        Ok(RedisDatabaseService { client, connection })
+        Ok(RedisDatabaseService { connection })
     }
 
     pub async fn add_user_index(&mut self, user: &User) {

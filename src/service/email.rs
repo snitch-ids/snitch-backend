@@ -63,8 +63,7 @@ pub async fn send_registration_mail(
         .unwrap();
 
     let credentials = Credentials::new(smtp_user, smtp_password);
-    let mailer = SmtpTransport::relay(&smtp_server)
-        .unwrap()
+    let mailer = SmtpTransport::relay(&smtp_server)?
         .credentials(credentials)
         .port(port)
         .authentication(vec![Mechanism::Login])

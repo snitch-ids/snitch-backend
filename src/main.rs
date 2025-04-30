@@ -16,7 +16,7 @@ use crate::persistence::token::TokenState;
 use actix_web::cookie::{Key, SameSite};
 
 use crate::api::registration::register_reply;
-use actix_web::web::{head, Data};
+use actix_web::web::Data;
 use actix_web::{middleware, App, HttpServer};
 use api::{
     authentication::{index, login, logout},
@@ -123,7 +123,8 @@ async fn main() -> std::io::Result<()> {
 }
 
 fn setup_cors(frontend_url: &str, backend_url: &str) -> Cors {
-    let cors = Cors::default()
+    
+    Cors::default()
         .allowed_origin(frontend_url)
         .allowed_origin(backend_url)
         .allowed_methods(vec!["GET", "POST", "DELETE", "OPTIONS"])
@@ -136,6 +137,5 @@ fn setup_cors(frontend_url: &str, backend_url: &str) -> Cors {
         ])
         .expose_headers(vec![header::SET_COOKIE])
         .supports_credentials()
-        .max_age(3600);
-    cors
+        .max_age(3600)
 }

@@ -9,6 +9,15 @@ RUN cargo build --release --jobs 2
 
 FROM debian:bookworm-slim AS runner-slim
 WORKDIR snitch-backend
-RUN apt update -y && apt install libssl-dev ca-certificates -y --no-install-recommends
+RUN apt update -y && apt install libssl-dev ca-certificates -y --no-install-recommends && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+RUN chown -R appuser:appuser /snitch-backend
+
+USER appuser
+
 COPY --from=BUILDER /snitch-backend/target/release/snitch-backend ./
 CMD ["./snitch-backend"]

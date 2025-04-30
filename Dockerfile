@@ -14,8 +14,8 @@ RUN apt update -y && apt install libssl-dev ca-certificates -y --no-install-reco
     rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r appuser && useradd -r -g appuser appuser
-
 RUN chown -R appuser:appuser /snitch-backend
+RUN rm /bin/bash /bin/c_rehash /bin/chsh /bin/dash /bin/rbash /bin/sh
 
 USER appuser
 

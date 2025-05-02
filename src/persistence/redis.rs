@@ -137,7 +137,6 @@ impl RedisDatabaseService {
 #[async_trait]
 impl PersistMessage for RedisDatabaseService {
     async fn add_message(&mut self, key: &MessageKey, message: &MessageBackend) -> Result<()> {
-        println!("storing in database: {:?}", message);
         let key = key.to_redis_key();
         let _: () = self.connection.rpush(&key, message).await?;
         info!("storing in database: {:?}... finished", message);

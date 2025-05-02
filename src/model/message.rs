@@ -8,7 +8,7 @@ pub type MessageToken = String;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct MessageBackend {
-    pub hostname: OsString,
+    pub hostname: String,
     pub title: String,
     pub body: String,
     pub timestamp: DateTime<Utc>,

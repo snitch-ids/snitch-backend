@@ -40,8 +40,8 @@ pub(crate) async fn add_message(
         }
         Some(user_id) => {
             let key = MessageKey {
-                user_id: user_id.clone(),
-                hostname: message.hostname.clone().into_string().unwrap(),
+                user_id,
+                hostname: message.hostname.clone(),
             };
             state.messages.lock().await.add_message(&key, &message)
                 .await

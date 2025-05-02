@@ -27,7 +27,7 @@ pub(crate) async fn get_token(
     let user_id: UserID = id.id().unwrap().into();
     let mut tokens = token_state.token.lock().await;
     if let Some(token) = tokens.get_token_of_user_id(&user_id).await {
-        Ok(web::Json(token.clone()))
+        Ok(web::Json(token))
     } else {
         Ok(web::Json(vec![]))
     }

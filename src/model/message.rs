@@ -1,3 +1,4 @@
+use std::ffi::OsString;
 use chrono::{DateTime, Utc};
 
 use redis::{RedisWrite, ToRedisArgs};
@@ -7,9 +8,9 @@ pub type MessageToken = String;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct MessageBackend {
-    pub hostname: String,
+    pub hostname: OsString,
     pub title: String,
-    pub content: String,
+    pub body: String,
     pub timestamp: DateTime<Utc>,
 }
 

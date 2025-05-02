@@ -33,20 +33,17 @@ pub(crate) async fn add_message(
 ) -> Result<impl Responder, APIError> {
     let mut token_store = token_state.token.lock().await;
     let token: MessageToken = auth.token().trim().to_string();
-
-    let obj = message.into_inner();
-    let mut message_db = state.messages.lock().await;
     match token_store.get_user_id_of_token(&token).await {
         None => {
-            info!("no user id of token {token}")
+            info!("no user id of token {token}");
+            return Err(APIError::Unauthorized)
         }
         Some(user_id) => {
             let key = MessageKey {
                 user_id: user_id.clone(),
-                hostname: obj.hostname.clone(),
+                hostname: message.hostname.clone().into_string().unwrap(),
             };
-            message_db
-                .add_message(&key, &obj)
+            state.messages.lock().await.add_message(&key, &message)
                 .await
                 .expect("failed adding message");
         }

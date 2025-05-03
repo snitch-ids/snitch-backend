@@ -5,7 +5,6 @@ use crate::persistence::{MessageKey, PersistMessage};
 use std::env;
 
 use anyhow::{Error, Ok, Result};
-use async_trait::async_trait;
 
 use log::{debug, info};
 use redis::aio;
@@ -23,7 +22,7 @@ const DAY: usize = 60 * MINUTE * 24;
 
 enum TTL {
     PendingUser = (15 * MINUTE) as isize,
-    Message = (30 * DAY) as isize,
+    Message = (1 * DAY) as isize,
 }
 
 impl RedisDatabaseService {
@@ -134,7 +133,6 @@ impl RedisDatabaseService {
     }
 }
 
-#[async_trait]
 impl PersistMessage for RedisDatabaseService {
     async fn add_message(&mut self, key: &MessageKey, message: &MessageBackend) -> Result<()> {
         let key = key.to_redis_key();

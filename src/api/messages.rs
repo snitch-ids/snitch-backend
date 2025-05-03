@@ -43,7 +43,7 @@ pub(crate) async fn add_message(
                 user_id,
                 hostname: message.hostname.clone(),
             };
-            state.messages.lock().await.add_message(&key, &message)
+            state.persist.lock().await.add_message(&key, &message)
                 .await
                 .expect("failed adding message");
         }
@@ -57,7 +57,7 @@ pub(crate) async fn get_message_hostnames(
     identity: Identity,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, APIError> {
-    let mut messages_state = state.messages.lock().await;
+    let mut messages_state = state.persist.lock().await;
     let user_id: UserID = identity.id().unwrap().into();
 
     let hostnames: Vec<String> = messages_state
@@ -78,7 +78,7 @@ pub(crate) async fn get_messages_by_hostname(
     info!("received request for {}", &hostname);
     let user_id: UserID = identity.id().unwrap().into();
     let key = MessageKey { user_id, hostname };
-    let mut messages_state = state.messages.lock().await;
+    let mut messages_state = state.persist.lock().await;
     let messages: Vec<MessageBackend> = messages_state
         .find_messages(&key)
         .await

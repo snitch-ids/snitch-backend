@@ -1,4 +1,3 @@
-use std::ffi::OsString;
 use chrono::{DateTime, Utc};
 
 use redis::{RedisWrite, ToRedisArgs};

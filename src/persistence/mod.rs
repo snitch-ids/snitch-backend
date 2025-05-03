@@ -6,7 +6,6 @@ use crate::model::user::UserID;
 use std::format;
 
 use anyhow::Result;
-use async_trait::async_trait;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct MessageKey {
@@ -29,7 +28,6 @@ impl MessageKey {
     }
 }
 
-#[async_trait]
 pub trait PersistMessage {
     async fn add_message(
         &mut self,

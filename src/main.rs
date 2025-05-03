@@ -62,7 +62,7 @@ async fn main() -> std::io::Result<()> {
     let frontend_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
 
     let state = Data::new(AppState {
-        messages: Mutex::new(db_service),
+        persist: Mutex::new(db_service),
         backend_url: Url::from_str(&backend_url)
             .unwrap_or_else(|_| panic!("failed to parse as url: {backend_url}")),
         frontend_url: Url::from_str(&frontend_url)

@@ -30,7 +30,7 @@ pub async fn get_user_by_id(
     state: web::Data<AppState>,
 ) -> Result<impl Responder, APIError> {
     let user_id: UserID = id.id().unwrap().into();
-    let mut users = state.messages.lock().await;
+    let mut users = state.persist.lock().await;
     let user = users.get_user_by_id(&user_id).await;
     let response = UserResponse::from(user);
     Ok(web::Json(response))
@@ -45,7 +45,7 @@ pub(crate) async fn add_user(
 
     let new_user = User::new(user.email.clone(), hash_password(&user.password));
 
-    let mut users = state.messages.lock().await;
+    let mut users = state.persist.lock().await;
     let added_user = users.add_user(&new_user).await;
     Ok(web::Json(added_user))
 }
@@ -55,7 +55,7 @@ pub(crate) async fn delete_user(
     id: Identity,
     state: web::Data<AppState>,
 ) -> Result<impl Responder, APIError> {
-    let mut users = state.messages.lock().await;
+    let mut users = state.persist.lock().await;
     let user_id: UserID = id.id().unwrap().into();
     let deleted_user = users.delete_user(&user_id).await;
     Ok(web::Json(deleted_user))

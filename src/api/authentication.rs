@@ -40,7 +40,7 @@ pub async fn login(
         return Err(APIError::BadRequest(format!("{e}")));
     }
 
-    let mut users = state.messages.lock().await;
+    let mut users = state.persist.lock().await;
     let email = &login_request.email;
     debug!("login request for {}", email);
     if let Some(user) = users.get_user_by_email(email).await {

@@ -12,7 +12,7 @@ use tokio::sync::Mutex;
 use crate::persistence::redis::RedisDatabaseService;
 
 pub struct AppState {
-    pub messages: Mutex<RedisDatabaseService>,
+    pub persist: Mutex<RedisDatabaseService>,
     pub backend_url: Url,
     pub frontend_url: Url,
 }

@@ -41,7 +41,7 @@ pub async fn register(
     let activation_link = Url::parse(&format!("{}/register/{nonce}", state.backend_url)).unwrap();
     let mail = generate_registration_mail("", &activation_link);
 
-    let mut users = state.messages.lock().await;
+    let mut users = state.persist.lock().await;
 
     let user = User::from(user_request);
     let receiver: Mailbox = user.email.parse().unwrap();
@@ -60,7 +60,7 @@ pub async fn register(
 #[get("/register/{nonce}")]
 pub async fn register_reply(nonce: web::Path<Nonce>, state: Data<AppState>) -> impl Responder {
     let nonce = nonce.into_inner();
-    let mut users = state.messages.lock().await;
+    let mut users = state.persist.lock().await;
     let _ = users
         .confirm_user_pending(&nonce)
         .await

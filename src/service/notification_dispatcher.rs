@@ -1,0 +1,43 @@
+use crate::model::user::UserID;
+use crate::persistence::redis::RedisDatabaseService;
+use actix::{Actor, Context, Handler, Message};
+use log::info;
+use std::sync::Arc;
+
+pub(crate) struct NotificationManager {
+    db_service: RedisDatabaseService,
+}
+
+impl NotificationManager {
+    pub(crate) fn new(db_service: RedisDatabaseService) -> NotificationManager {
+        Self { db_service }
+    }
+}
+
+impl NotificationManager {
+    pub(crate) fn try_notify(&self, user_id: &UserID) {
+        self.db_service.get_notification_settings(user_id);
+    }
+}
+
+#[derive(Message)]
+#[rtype(result = "bool")]
+pub(crate) struct TryNotify(pub UserID);
+
+pub(crate) struct NotificationActor {
+    pub(crate) notification_manager: NotificationManager,
+}
+
+impl Actor for NotificationActor {
+    type Context = Context<Self>;
+}
+
+impl Handler<TryNotify> for NotificationActor {
+    type Result = bool;
+
+    fn handle(&mut self, msg: TryNotify, _: &mut Context<Self>) -> Self::Result {
+        self.notification_manager.try_notify(&msg.0);
+        info!("try notify:");
+        true
+    }
+}

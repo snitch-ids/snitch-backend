@@ -1,6 +1,7 @@
 use crate::api::AppState;
 use crate::model::message::{MessageBackend, MessageToken};
 use crate::persistence::{MessageKey, PersistMessage};
+use actix::Addr;
 use actix_identity::Identity;
 use actix_web::{get, post, web, Responder};
 
@@ -10,6 +11,7 @@ use crate::model::user::UserID;
 use crate::TokenState;
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 
+use crate::service::notification_dispatcher::{NotificationActor, TryNotify};
 use log::info;
 use serde::Deserialize;
 use serde::Serialize;
@@ -30,6 +32,7 @@ pub(crate) async fn add_message(
     message: web::Json<MessageBackend>,
     token_state: web::Data<TokenState>,
     state: web::Data<AppState>,
+    notification_addr: web::Data<Addr<NotificationActor>>,
 ) -> Result<impl Responder, APIError> {
     let mut token_store = token_state.token.lock().await;
     let token: MessageToken = auth.token().trim().to_string();
@@ -46,7 +49,7 @@ pub(crate) async fn add_message(
                 .notify_user(&user_id)
                 .await
             {
-                // send notification
+                notification_addr.do_send(TryNotify(user_id.clone()));
             }
             let key = MessageKey {
                 user_id,

@@ -3,9 +3,11 @@ use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
 use crate::persistence::{MessageKey, PersistMessage};
 use std::env;
+use std::result::Result::Ok as StdOk;
 
 use anyhow::{Error, Ok, Result};
-
+use chatterbox::dispatcher::slack::Slack;
+use chatterbox::dispatcher::telegram::Telegram;
 use log::{debug, info};
 use redis::aio;
 use redis::JsonAsyncCommands;
@@ -24,6 +26,11 @@ const DAY: usize = 60 * MINUTE * 24;
 enum TTL {
     PendingUser = (15 * MINUTE) as isize,
     Message = (1 * DAY) as isize,
+}
+
+pub(crate) struct NotificationSettings {
+    telegram: Option<Telegram>,
+    slack: Option<Slack>,
 }
 
 impl RedisDatabaseService {
@@ -132,6 +139,43 @@ impl RedisDatabaseService {
         };
         None
     }
+
+    pub(crate) fn get_notification_settings(&self, _user_id: &UserID) -> NotificationSettings {
+        let notification_settings = load_demo_notification_settings();
+        notification_settings
+    }
+}
+
+fn load_demo_notification_settings() -> NotificationSettings {
+    let slack = match std::env::var("HOISTER_SLACK_WEBHOOK_URL") {
+        StdOk(webhook_url) => {
+            info!("Using Slack dispatcher");
+            let channel =
+                std::env::var("HOISTER_SLACK_CHANNEL").expect("HOISTER_SLACK_CHANNEL not defined");
+            Some(Slack {
+                webhook_url,
+                channel,
+            })
+        }
+        Err(_) => {
+            info!("HOISTER_SLACK_WEBHOOK_URL not defined");
+            None
+        }
+    };
+    let telegram = match std::env::var("HOISTER_TELEGRAM_BOT_TOKEN") {
+        StdOk(bot_token) => {
+            info!("Using Telegram dispatcher");
+            let chat_id = std::env::var("HOISTER_TELEGRAM_CHAT_ID")
+                .expect("HOISTER_TELEGRAM_CHAT_ID not defined");
+            Some(Telegram { bot_token, chat_id })
+        }
+        Err(_) => {
+            info!("HOISTER_TELEGRAM_BOT_TOKEN not defined");
+            None
+        }
+    };
+
+    NotificationSettings { telegram, slack }
 }
 
 impl PersistMessage for RedisDatabaseService {

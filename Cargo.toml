@@ -32,6 +32,7 @@ dotenv = "0.15.0"
 validator = { version = "0.15", features = ["derive"] }
 chatterbox = "1.2.2"
 thiserror = "2.0"
+actix = "0.13.5"
 
 [dependencies.uuid]
 version = "1.2.2"

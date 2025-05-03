@@ -5,19 +5,19 @@ mod model;
 mod persistence;
 mod service;
 
+use crate::persistence::token::TokenState;
+use actix::Actor;
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
+use actix_session::{storage::CookieSessionStore, SessionMiddleware};
+use actix_web::cookie::{Key, SameSite};
 use std::env;
 use std::str::FromStr;
-
-use actix_session::{storage::CookieSessionStore, SessionMiddleware};
-
-use crate::persistence::token::TokenState;
-use actix_web::cookie::{Key, SameSite};
+use std::sync::Arc;
 
 use crate::api::registration::register_reply;
 use actix_web::web::Data;
-use actix_web::{middleware, services, App, HttpServer};
+use actix_web::{middleware, services, web, App, HttpServer};
 use api::{
     authentication::{index, login, logout},
     messages::{add_message, get_messages_by_hostname},
@@ -42,6 +42,7 @@ fn get_secret_key() -> Key {
 const USER_COOKIE_NAME: &str = "snitch-user";
 const PORT: u16 = 8081;
 
+use crate::service::notification_dispatcher::NotificationManager;
 use crate::service::notification_filter::NotificationFilter;
 use actix_web::http::header;
 
@@ -54,15 +55,23 @@ async fn main() -> std::io::Result<()> {
     };
 
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    let db_service = RedisDatabaseService::new()
-        .await
-        .expect("failed to create redis service");
+
     let notification_filter = NotificationFilter::new();
 
     let backend_url =
         env::var("SNITCH_BACKEND_URL").expect("environment variable SNITCH_BACKEND_URL undefined");
     let frontend_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
+    let db_service = RedisDatabaseService::new()
+        .await
+        .expect("failed to create redis service");
+    let notification_actor = crate::service::notification_dispatcher::NotificationActor {
+        notification_manager: NotificationManager::new(db_service),
+    };
+    let notification_addr = web::Data::new(notification_actor.start());
 
+    let db_service = RedisDatabaseService::new()
+        .await
+        .expect("failed to create redis service");
     let state = Data::new(AppState {
         notification_filter: Mutex::new(notification_filter),
         persist: Mutex::new(db_service),
@@ -122,6 +131,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::NormalizePath::trim())
             .wrap(middleware::Logger::default())
             .app_data(state.clone())
+            .app_data(notification_addr.clone())
             .app_data(state_token.clone())
     })
     .bind(("0.0.0.0", PORT))?

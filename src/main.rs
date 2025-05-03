@@ -17,7 +17,7 @@ use actix_web::cookie::{Key, SameSite};
 
 use crate::api::registration::register_reply;
 use actix_web::web::Data;
-use actix_web::{middleware, App, HttpServer};
+use actix_web::{middleware, services, App, HttpServer};
 use api::{
     authentication::{index, login, logout},
     messages::{add_message, get_messages_by_hostname},
@@ -85,33 +85,37 @@ async fn main() -> std::io::Result<()> {
             .ok();
         let cors = setup_cors(&frontend_url, &backend_url);
 
+        let services = services![
+            welcome,
+            add_message,
+            register,
+            register_reply,
+            login,
+            logout,
+            index,
+            get_messages_by_hostname,
+            get_message_hostnames,
+            get_user_by_id,
+            delete_user,
+        ];
+        let services_token = services![create_token, get_token, delete_token,];
+
+        let session_middleware =
+            SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
+                .cookie_http_only(true)
+                .cookie_domain(cookie_domain)
+                .cookie_path("/".into())
+                .cookie_name(USER_COOKIE_NAME.to_string())
+                .cookie_same_site(SAME_SITE)
+                .cookie_secure(true)
+                .build();
+
         App::new()
             .wrap(cors)
             .wrap(IdentityMiddleware::default())
-            .wrap(
-                SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
-                    .cookie_http_only(true)
-                    .cookie_domain(cookie_domain)
-                    .cookie_path("/".into())
-                    .cookie_name(USER_COOKIE_NAME.to_string())
-                    .cookie_same_site(SAME_SITE)
-                    .cookie_secure(true)
-                    .build(),
-            )
-            .service(welcome)
-            .service(add_message)
-            .service(register)
-            .service(register_reply)
-            .service(login)
-            .service(logout)
-            .service(index)
-            .service(get_messages_by_hostname)
-            .service(get_message_hostnames)
-            .service(get_user_by_id)
-            .service(delete_user)
-            .service(create_token)
-            .service(get_token)
-            .service(delete_token)
+            .wrap(session_middleware)
+            .service(services)
+            .service(services_token)
             .wrap(middleware::NormalizePath::trim())
             .wrap(middleware::Logger::default())
             .app_data(state.clone())
@@ -123,7 +127,6 @@ async fn main() -> std::io::Result<()> {
 }
 
 fn setup_cors(frontend_url: &str, backend_url: &str) -> Cors {
-    
     Cors::default()
         .allowed_origin(frontend_url)
         .allowed_origin(backend_url)
@@ -133,7 +136,7 @@ fn setup_cors(frontend_url: &str, backend_url: &str) -> Cors {
             header::ACCEPT,
             header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
             header::COOKIE,
-            header::CONTENT_TYPE
+            header::CONTENT_TYPE,
         ])
         .expose_headers(vec![header::SET_COOKIE])
         .supports_credentials()

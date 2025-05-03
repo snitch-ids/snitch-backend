@@ -1,8 +1,7 @@
 use crate::model::user::UserID;
 use crate::persistence::redis::RedisDatabaseService;
 use actix::{Actor, Context, Handler, Message};
-use log::info;
-use std::sync::Arc;
+use chatterbox::message::Dispatcher;
 
 pub(crate) struct NotificationManager {
     db_service: RedisDatabaseService,
@@ -15,12 +14,14 @@ impl NotificationManager {
 }
 
 impl NotificationManager {
-    pub(crate) fn try_notify(&self, user_id: &UserID) {
-        self.db_service.get_notification_settings(user_id);
+    pub(crate) fn try_notify(&self, user_id: UserID) -> bool {
+        let settings = self.db_service.get_notification_settings(&user_id);
+        let dispatcher = Dispatcher::new(settings.into());
+        dispatcher.send_test_message().is_ok()
     }
 }
 
-#[derive(Message)]
+#[derive(Message, Clone)]
 #[rtype(result = "bool")]
 pub(crate) struct TryNotify(pub UserID);
 
@@ -36,8 +37,6 @@ impl Handler<TryNotify> for NotificationActor {
     type Result = bool;
 
     fn handle(&mut self, msg: TryNotify, _: &mut Context<Self>) -> Self::Result {
-        self.notification_manager.try_notify(&msg.0);
-        info!("try notify:");
-        true
+        self.notification_manager.try_notify(msg.0)
     }
 }

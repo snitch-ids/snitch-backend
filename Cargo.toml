@@ -30,7 +30,8 @@ tera = "1.17.1"
 lazy_static = "1.4.0"
 dotenv = "0.15.0"
 validator = { version = "0.15", features = ["derive"] }
-chatterbox = "1.2.2"
+#chatterbox = "1.2.2"
+chatterbox = {path = "../chatterbox"}
 thiserror = "2.0"
 actix = "0.13.5"
 

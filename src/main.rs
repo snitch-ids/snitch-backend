@@ -13,7 +13,6 @@ use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::cookie::{Key, SameSite};
 use std::env;
 use std::str::FromStr;
-use std::sync::Arc;
 
 use crate::api::registration::register_reply;
 use actix_web::web::Data;

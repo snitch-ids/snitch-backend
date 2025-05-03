@@ -16,7 +16,7 @@ impl NotificationFilter {
 
     pub(crate) async fn notify_user(&mut self, key: &UserID) -> bool {
         self.cleanup().await;
-        if self.last_notifications.contains_key(&key) {
+        if self.last_notifications.contains_key(key) {
             return false;
         }
         self.last_notifications.insert(key.clone(), Utc::now());

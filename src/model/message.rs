@@ -1,3 +1,4 @@
+use chatterbox::message::{Message, Notification};
 use chrono::{DateTime, Utc};
 
 use redis::{RedisWrite, ToRedisArgs};
@@ -20,5 +21,15 @@ impl ToRedisArgs for MessageBackend {
     {
         let as_string = serde_json::to_string(self).expect("failed parsing to string");
         out.write_arg(as_string.as_bytes());
+    }
+}
+
+impl Notification for MessageBackend {
+    fn message(&self) -> Message {
+        let body = self.body.clone() + "\n\n" + &self.hostname;
+        Message {
+            title: self.title.clone(),
+            body,
+        }
     }
 }

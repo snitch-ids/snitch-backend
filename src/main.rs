@@ -42,6 +42,7 @@ fn get_secret_key() -> Key {
 const USER_COOKIE_NAME: &str = "snitch-user";
 const PORT: u16 = 8081;
 
+use crate::service::notification_filter::NotificationFilter;
 use actix_web::http::header;
 
 const SAME_SITE: SameSite = SameSite::Strict;
@@ -56,12 +57,14 @@ async fn main() -> std::io::Result<()> {
     let db_service = RedisDatabaseService::new()
         .await
         .expect("failed to create redis service");
+    let notification_filter = NotificationFilter::new();
 
     let backend_url =
         env::var("SNITCH_BACKEND_URL").expect("environment variable SNITCH_BACKEND_URL undefined");
     let frontend_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
 
     let state = Data::new(AppState {
+        notification_filter: Mutex::new(notification_filter),
         persist: Mutex::new(db_service),
         backend_url: Url::from_str(&backend_url)
             .unwrap_or_else(|_| panic!("failed to parse as url: {backend_url}")),

@@ -3154,6 +3154,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tera",
+ "thiserror",
  "tokio",
  "uuid",
  "validator 0.15.0",

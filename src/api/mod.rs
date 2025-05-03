@@ -10,11 +10,13 @@ use reqwest::Url;
 use tokio::sync::Mutex;
 
 use crate::persistence::redis::RedisDatabaseService;
+use crate::service::notification_filter::NotificationFilter;
 
 pub struct AppState {
     pub persist: Mutex<RedisDatabaseService>,
     pub backend_url: Url,
     pub frontend_url: Url,
+    pub(crate) notification_filter: Mutex<NotificationFilter>,
 }
 
 #[get("/")]

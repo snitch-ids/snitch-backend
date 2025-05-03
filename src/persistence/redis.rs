@@ -12,6 +12,7 @@ use redis::JsonAsyncCommands;
 use redis::{AsyncCommands, FromRedisValue};
 use serde_json::json;
 
+#[derive(Debug)]
 pub struct RedisDatabaseService {
     pub connection: aio::MultiplexedConnection,
 }

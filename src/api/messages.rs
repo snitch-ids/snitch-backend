@@ -39,6 +39,15 @@ pub(crate) async fn add_message(
             return Err(APIError::Unauthorized);
         }
         Some(user_id) => {
+            if state
+                .notification_filter
+                .lock()
+                .await
+                .notify_user(&user_id)
+                .await
+            {
+                // send notification
+            }
             let key = MessageKey {
                 user_id,
                 hostname: message.hostname.clone(),

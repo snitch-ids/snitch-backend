@@ -1,5 +1,4 @@
-use crate::model::user::UserID;
-use crate::persistence::redis::RedisDatabaseService;
+use crate::persistence::redis::{NotificationSettings, RedisDatabaseService};
 use actix::{Actor, Context, Handler, Message};
 use chatterbox::message::Dispatcher;
 
@@ -14,16 +13,15 @@ impl NotificationManager {
 }
 
 impl NotificationManager {
-    pub(crate) fn try_notify(&self, user_id: UserID) -> bool {
-        let settings = self.db_service.get_notification_settings(&user_id);
-        let dispatcher = Dispatcher::new(settings.into());
+    pub(crate) fn try_notify(&self, notification_settings: NotificationSettings) -> bool {
+        let dispatcher = Dispatcher::new(notification_settings.into());
         dispatcher.send_test_message().is_ok()
     }
 }
 
 #[derive(Message, Clone)]
 #[rtype(result = "bool")]
-pub(crate) struct TryNotify(pub UserID);
+pub(crate) struct TryNotify(pub NotificationSettings);
 
 pub(crate) struct NotificationActor {
     pub(crate) notification_manager: NotificationManager,

@@ -49,7 +49,13 @@ pub(crate) async fn add_message(
                 .notify_user(&user_id)
                 .await
             {
-                notification_addr.do_send(TryNotify(user_id.clone()));
+                let notification_settings = state
+                    .persist
+                    .lock()
+                    .await
+                    .get_notification_settings(&user_id)
+                    .await;
+                notification_addr.do_send(TryNotify(notification_settings));
             }
             let key = MessageKey {
                 user_id,

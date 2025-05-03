@@ -1,10 +1,12 @@
 use crate::model::user::UserID;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use std::collections::HashMap;
+
+const DEAD_TIME: i64 = 30;
 
 #[derive(Debug)]
 pub(crate) struct NotificationFilter {
-    pub(crate) last_notifications: HashMap<UserID, DateTime<Utc>>,
+    pub(crate) last_notifications: HashMap<UserID, i64>,
 }
 
 impl NotificationFilter {
@@ -19,14 +21,15 @@ impl NotificationFilter {
         if self.last_notifications.contains_key(key) {
             return false;
         }
-        self.last_notifications.insert(key.clone(), Utc::now());
+        self.last_notifications
+            .insert(key.clone(), Utc::now().timestamp() + DEAD_TIME);
         true
     }
 
     async fn cleanup(&mut self) {
-        let mut now = Utc::now();
+        let mut now = Utc::now().timestamp();
         self.last_notifications
-            .retain(|_, timeout| timeout > &mut now)
+            .retain(|_, time_expired| &mut now < time_expired)
     }
 }
 

@@ -30,6 +30,7 @@ enum TTL {
     Message = DAY as isize,
 }
 
+#[derive(Clone)]
 pub(crate) struct NotificationSettings {
     telegram: Option<Telegram>,
     slack: Option<Slack>,
@@ -152,8 +153,10 @@ impl RedisDatabaseService {
         None
     }
 
-    pub(crate) fn get_notification_settings(&self, _user_id: &UserID) -> NotificationSettings {
-        
+    pub(crate) async fn get_notification_settings(
+        &self,
+        _user_id: &UserID,
+    ) -> NotificationSettings {
         load_demo_notification_settings()
     }
 }

@@ -11,9 +11,10 @@ use chatterbox::dispatcher::slack::Slack;
 use chatterbox::dispatcher::telegram::Telegram;
 use chatterbox::dispatcher::Sender;
 use log::{debug, info};
-use redis::aio;
 use redis::JsonAsyncCommands;
+use redis::{aio, RedisResult};
 use redis::{AsyncCommands, FromRedisValue};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 #[derive(Debug)]
@@ -30,12 +31,20 @@ enum TTL {
     Message = DAY as isize,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 pub(crate) struct NotificationSettings {
     telegram: Option<Telegram>,
     slack: Option<Slack>,
     email: Option<Email>,
 }
+
+impl FromRedisValue for NotificationSettings {
+    fn from_redis_value(v: &redis::Value) -> RedisResult<Self> {
+        let s: String = FromRedisValue::from_redis_value(v)?;
+        StdOk(serde_json::from_str(&s)?)
+    }
+}
+
 impl From<NotificationSettings> for Sender {
     fn from(value: NotificationSettings) -> Self {
         Self {
@@ -154,13 +163,33 @@ impl RedisDatabaseService {
     }
 
     pub(crate) async fn get_notification_settings(
-        &self,
-        _user_id: &UserID,
+        &mut self,
+        user_id: &UserID,
     ) -> NotificationSettings {
-        load_demo_notification_settings()
+        self.connection
+            .json_get(format!("notification_settings:{user_id}"), ".")
+            .await
+            .unwrap_or_default()
+    }
+
+    pub(crate) async fn set_notification_settings(
+        &mut self,
+        user_id: &UserID,
+        notification_settings: NotificationSettings,
+    ) {
+        self.connection
+            .json_set(
+                format!("notification_settings:{user_id}"),
+                ".",
+                &notification_settings,
+            )
+            .await
+            .unwrap()
     }
 }
 
+#[allow(dead_code)]
+#[cfg(debug_assertions)]
 fn load_demo_notification_settings() -> NotificationSettings {
     let slack = match std::env::var("CHATTERBOX_SLACK_WEBHOOK_URL") {
         StdOk(webhook_url) => {

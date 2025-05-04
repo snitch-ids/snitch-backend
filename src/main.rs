@@ -41,6 +41,7 @@ fn get_secret_key() -> Key {
 const USER_COOKIE_NAME: &str = "snitch-user";
 const PORT: u16 = 8081;
 
+use crate::api::notification_settings::get_notification_services;
 use crate::service::notification_dispatcher::NotificationManager;
 use crate::service::notification_filter::NotificationFilter;
 use actix_web::http::header;
@@ -63,8 +64,8 @@ async fn main() -> std::io::Result<()> {
     let db_service = RedisDatabaseService::new()
         .await
         .expect("failed to create redis service");
-    let notification_actor = crate::service::notification_dispatcher::NotificationActor {
-        notification_manager: NotificationManager::new(db_service),
+    let notification_actor = service::notification_dispatcher::NotificationActor {
+        notification_manager: NotificationManager::new(),
     };
     let notification_addr = web::Data::new(notification_actor.start());
 
@@ -127,6 +128,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(session_middleware)
             .service(services)
             .service(services_token)
+            .service(get_notification_services())
             .wrap(middleware::NormalizePath::trim())
             .wrap(middleware::Logger::default())
             .app_data(state.clone())

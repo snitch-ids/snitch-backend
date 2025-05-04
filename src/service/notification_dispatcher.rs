@@ -1,14 +1,12 @@
-use crate::persistence::redis::{NotificationSettings, RedisDatabaseService};
+use crate::persistence::redis::NotificationSettings;
 use actix::{Actor, Context, Handler, Message};
 use chatterbox::message::Dispatcher;
 
-pub(crate) struct NotificationManager {
-    db_service: RedisDatabaseService,
-}
+pub(crate) struct NotificationManager {}
 
 impl NotificationManager {
-    pub(crate) fn new(db_service: RedisDatabaseService) -> NotificationManager {
-        Self { db_service }
+    pub(crate) fn new() -> NotificationManager {
+        Self {}
     }
 }
 

@@ -68,9 +68,8 @@ jobs:
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@v6
-        working-directory: backend
         with:
-          context: .
+          context: backend
           platforms: linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}

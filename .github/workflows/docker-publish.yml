@@ -14,10 +14,8 @@ on:
     branches: [ "main" ]
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: registry.hub.docker.com
   REGISTRY_USERNAME: emrius11
-  # github.repository as <account>/<repo>
   IMAGE_NAME: emrius11/snitch-backend
 
 jobs:
@@ -70,6 +68,7 @@ jobs:
       - name: Build and push Docker image
         id: build-and-push
         uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
+        working-directory: backend
         with:
           context: .
           platforms: linux/arm64

@@ -13,7 +13,7 @@ use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::cookie::{Key, SameSite};
 use std::env;
 use std::str::FromStr;
-
+use actix_session::config::{PersistentSession, SessionLifecycle};
 use crate::api::registration::register_reply;
 use actix_web::web::Data;
 use actix_web::{middleware, services, web, App, HttpServer};
@@ -115,6 +115,7 @@ async fn main() -> std::io::Result<()> {
         let session_middleware =
             SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
                 .cookie_http_only(true)
+                .session_lifecycle(SessionLifecycle::PersistentSession(PersistentSession::default()))
                 .cookie_domain(cookie_domain)
                 .cookie_path("/".into())
                 .cookie_name(USER_COOKIE_NAME.to_string())

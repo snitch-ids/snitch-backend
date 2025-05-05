@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:svg="http://www.w3.org/2000/svg" id="svg4248" viewBox="0 0 540.75 512.75" version="1.0">
+  <defs id="defs4250">
+    <linearGradient id="linearGradient4226" y2="327.81" gradientUnits="userSpaceOnUse" y1="336.37" x2="358.85" x1="350.72">
+      <stop id="stop4193" offset="0"/>
+      <stop id="stop4195" stop-opacity="0" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient4224" x1="110.05" xlink:href="#linearGradient1045" gradientUnits="userSpaceOnUse" y1="138.24" gradientTransform="matrix(1.0182 -.031794 .030640 .98120 248.5 191.29)" x2="103.69" y2="145.34"/>
+    <linearGradient id="linearGradient4222" x1="42.498" xlink:href="#linearGradient1045" gradientUnits="userSpaceOnUse" y1="103.57" gradientTransform="matrix(1.1879 -.035264 .025189 .76682 265.96 191.04)" x2="54.322" y2="167.94"/>
+    <linearGradient id="linearGradient1045">
+      <stop id="stop1046" stop-color="#fff" stop-opacity=".74902" offset="0"/>
+      <stop id="stop1047" stop-color="#fff" stop-opacity="0" offset="1"/>
+    </linearGradient>
+    <linearGradient id="linearGradient4220" x1="57.668" xlink:href="#linearGradient1045" gradientUnits="userSpaceOnUse" y1="84.017" gradientTransform="matrix(1.1482 -.034084 .030664 .93348 252.43 191.06)" x2="60.491" y2="111.24"/>
+    <radialGradient id="radialGradient4218" fx="69.987" fy="90.419" gradientUnits="userSpaceOnUse" cy="105.94" cx="61.564" gradientTransform="matrix(1.1767 -.065706 .062292 1.0081 242.27 193.3)" r="27.959">
+      <stop id="stop1440" stop-color="#fff" stop-opacity=".57047" offset="0"/>
+      <stop id="stop1441" stop-color="#96b0c6" stop-opacity=".89933" offset="1"/>
+    </radialGradient>
+    <filter id="filter4141">
+      <feGaussianBlur id="feGaussianBlur4143" stdDeviation="1.0889941"/>
+    </filter>
+    <linearGradient id="linearGradient4216" x1="427.8" gradientUnits="userSpaceOnUse" y1="418.59" gradientTransform="translate(-15.844 -42.822)" x2="308.88" y2="339.37">
+      <stop id="stop4147" offset="0"/>
+      <stop id="stop4149" stop-opacity="0" offset="1"/>
+    </linearGradient>
+  </defs>
+  <g id="layer1" transform="translate(-25.339 -31.221)">
+    <g id="g4206" transform="matrix(5.8474 0 0 5.8474 -1659.6 -1519.1)">
+      <path id="path4039" d="m316.07 281.98c-0.44 0.05-0.86 0.1-1.3 0.17-14.09 2.27-23.67 15.31-21.4 29.12 2.28 13.8 15.56 23.18 29.65 20.91 5.32-0.86 10-3.24 13.64-6.64l29.69 21.53c3.12-0.43 5.32-2.54 6.64-6.36l-31.28-21.38-0.61 0.71c3-4.95 4.32-10.9 3.31-17.01-2.21-13.37-14.75-22.55-28.34-21.05zm0.12 1.06c13.02-1.44 25.05 7.36 27.17 20.17 2.18 13.22-8.31 25.74-21.8 27.92-13.5 2.18-24.92-6.79-27.1-20.01s6.99-25.74 20.49-27.92c0.42-0.07 0.82-0.11 1.24-0.16z" fill-rule="evenodd" filter="url(#filter4141)" stroke-width=".5" fill="url(#linearGradient4216)"/>
+      <path id="path852" stroke-width=".5" fill-rule="evenodd" fill="#807d74" d="m344.17 310.53l29.62 27.05c-1.89 3.87-4.5 5.81-7.81 5.84l-28.02-27.1 6.21-5.79z"/>
+      <path id="path4204" fill-opacity=".99608" fill="#273f57" d="m344.99 308.54c-25.58 26.69-58.36-3.93-41.04-28.54-22.48 26.7 17.05 59.24 41.04 28.54z"/>
+      <path id="path853" d="m349.3 294.36c0.43 13.27-10.54 24.37-24.49 24.79-13.96 0.41-25.64-10.02-26.07-23.29-0.44-13.26 10.53-24.36 24.49-24.78 13.95-0.41 25.63 10.02 26.07 23.28z" stroke-opacity=".99524" fill-rule="evenodd" stroke="#314e6c" stroke-width="1.1349" fill="url(#radialGradient4218)"/>
+      <path id="path863" d="m334.58 277.67c3.58 4.29-0.19 12.78-8.39 18.96-8.21 6.19-17.76 7.73-21.33 3.45-3.58-4.29 0.19-12.78 8.39-18.96 8.21-6.19 17.76-7.73 21.33-3.45z" fill-rule="evenodd" fill-opacity=".090909" stroke-width="1pt" fill="url(#linearGradient4220)"/>
+      <path id="path885" d="m310.11 312.32c14.5 4.31 31.86-4.46 36.43-18.21 4.41 12.57-23.29 39.53-36.43 18.21z" fill-opacity=".55208" fill-rule="evenodd" stroke-width="1pt" fill="url(#linearGradient4222)"/>
+      <path id="path1766" fill-rule="evenodd" fill-opacity=".75" fill="url(#linearGradient4224)" d="m339.59 316.19l4.63-4.38 27.97 25.69c1.23 3.33-0.45 5.68-6.1 4.88l-26.5-26.19z"/>
+      <path id="path4187" fill-rule="evenodd" fill="url(#linearGradient4226)" d="m338.94 316.82l4.62-4.38 27.97 25.69c1.24 3.33-0.44 5.69-6.1 4.88l-26.49-26.19z"/>
+    </g>
+  </g>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+        <dc:publisher>
+          <cc:Agent rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Magnifying Glass</dc:title>
+        <dc:date>2008-02-10T17:36:52</dc:date>
+        <dc:description>Transparent magnifying glass with shadow.</dc:description>
+        <dc:source>http://openclipart.org/detail/13560/magnifying-glass-by-sarxos</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>sarxos</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>clip art</rdf:li>
+            <rdf:li>clipart</rdf:li>
+            <rdf:li>externalsource</rdf:li>
+            <rdf:li>glass</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>image</rdf:li>
+            <rdf:li>loupe</rdf:li>
+            <rdf:li>magnifying</rdf:li>
+            <rdf:li>media</rdf:li>
+            <rdf:li>png</rdf:li>
+            <rdf:li>public domain</rdf:li>
+            <rdf:li>svg</rdf:li>
+            <rdf:li>tool</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

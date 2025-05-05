@@ -1,0 +1,47 @@
+[package]
+name = "snitch-backend"
+version = "0.1.0"
+edition = "2021"
+include = ["/src/service/templates/*.html"]
+
+[[bin]]
+name = "snitch-backend"
+
+[dependencies]
+actix-web = "4.10.2"
+actix-identity = "0.8.0"
+actix-session = {version= "0.10.1", features=["redis-session", "cookie-session"]}
+actix-web-httpauth = "0.8.2"
+actix-cors = "0.7.1"
+tokio = { version = "1", features = ["full"] }
+serde = {version = "*", features=["derive"]}
+serde_json = "*"
+derive_more = "0.99.17"
+reqwest = "0.12.15"
+anyhow = "1.0"
+env_logger = "0.9.0"
+log = "0.4.17"
+chrono = {version="0.4.40", features=["serde"]}
+redis = {version= "0.29.5", features=["tokio-comp", "streams", "json"]}
+rand = "0.8"
+argonautica = "0.2.0"
+lettre = {version="0.11", features=["smtp-transport"]}
+tera = "1.17.1"
+lazy_static = "1.4.0"
+dotenv = "0.15.0"
+validator = { version = "0.15", features = ["derive"] }
+#chatterbox = "1.2.2"
+chatterbox = {path = "../chatterbox"}
+thiserror = "2.0"
+actix = "0.13.5"
+
+[dependencies.uuid]
+version = "1.2.2"
+features = [
+    "v4",                # Lets you generate random UUIDs
+    "fast-rng",          # Use a faster (but still sufficiently random) RNG
+    "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+]
+
+[dev-dependencies]
+needs_env_var = "2.0.1"

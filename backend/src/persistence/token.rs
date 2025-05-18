@@ -89,7 +89,7 @@ impl TokenState {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::RedisDatabaseService;
+    use crate::persistence::redis::RedisDatabaseService;
 
     #[tokio::test]
     async fn test_token_store() {

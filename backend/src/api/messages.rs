@@ -1,5 +1,4 @@
 use crate::api::AppState;
-use crate::model::message::{MessageBackend, MessageToken};
 use crate::persistence::{MessageKey, PersistMessage};
 use actix::Addr;
 use actix_identity::Identity;
@@ -8,9 +7,10 @@ use actix_web::{get, post, web, Responder};
 use crate::errors::APIError;
 
 use crate::model::user::UserID;
-use crate::TokenState;
+use crate::persistence::token::TokenState;
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 
+use crate::model::message::{MessageBackend, MessageToken};
 use crate::service::notification_dispatcher::{NotificationActor, TryNotify};
 use log::info;
 use serde::Deserialize;

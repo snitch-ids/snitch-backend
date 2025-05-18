@@ -1,10 +1,10 @@
 pub mod redis;
 pub mod token;
 
-use crate::model::message::MessageBackend;
 use crate::model::user::UserID;
 use std::format;
 
+use crate::model::message::MessageBackend;
 use anyhow::Result;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -28,7 +28,7 @@ impl MessageKey {
     }
 }
 
-pub trait PersistMessage {
+pub(crate) trait PersistMessage {
     async fn add_message(
         &mut self,
         message_key: &MessageKey,

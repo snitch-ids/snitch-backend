@@ -1,4 +1,4 @@
-use crate::AppState;
+use crate::api::AppState;
 use actix_identity::Identity;
 
 use crate::service::authentication::valid_hash;

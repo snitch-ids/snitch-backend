@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 include = ["/src/service/templates/*.html"]
 
-[[bin]]
-name = "snitch-backend"
+[lib]
+name = "snitch_backend"
+path = "src/lib.rs"
 
 [dependencies]
 actix-web = "4.10.2"
@@ -43,4 +44,4 @@ features = [
 ]
 
 [dev-dependencies]
-needs_env_var = "2.0.1"
+needs_env_var = "1.1.0"

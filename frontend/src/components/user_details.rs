@@ -10,9 +10,10 @@ pub struct UserDetails {
 #[function_component]
 pub fn UserDetailsComponent() -> Html {
     let (user_state, user_dispatch) = use_store::<UserStore>();
-    user_dispatch.set(
-        UserStore{ email: Some("asdfasdf.asdfasfd@asdf.de".to_string()), authentication_error: None }
-    );
+    user_dispatch.set(UserStore {
+        email: Some("asdfasdf.asdfasfd@asdf.de".to_string()),
+        authentication_error: None,
+    });
 
     let username = &user_state.email;
     html!(

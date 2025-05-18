@@ -2,10 +2,10 @@ use crate::api::AppState;
 use crate::errors::APIError;
 use crate::model::user::{User, UserID};
 use crate::service::authentication::hash_password;
-use crate::{Deserialize, Serialize};
 use actix_identity::Identity;
 use actix_web::{delete, get, post, web, Responder};
 use log::info;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct UserResponse {

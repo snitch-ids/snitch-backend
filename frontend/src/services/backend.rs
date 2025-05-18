@@ -9,6 +9,7 @@ use wasm_cookies::cookies::get;
 use web_sys::console::{log_1, warn_1};
 use web_sys::RequestCredentials;
 
+use snitch_backend::model::message::MessageBackend;
 use yewdux::prelude::*;
 
 const BACKEND_URL: &str = env!("SNITCH_BACKEND_URL"); // See Dockerfile
@@ -122,13 +123,13 @@ pub fn authenticated() -> bool {
     get(USER_COOKIE_NAME, USER_COOKIE_NAME).is_some()
 }
 
-#[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
-pub struct MessageBackend {
-    pub hostname: String,
-    pub title: String,
-    pub body: String,
-    pub timestamp: String,
-}
+// #[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
+// pub struct MessageBackend {
+//     pub hostname: String,
+//     pub title: String,
+//     pub body: String,
+//     pub timestamp: String,
+// }
 
 #[derive(Clone, Debug)]
 pub enum FetchError {

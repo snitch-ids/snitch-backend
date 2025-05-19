@@ -42,6 +42,7 @@ const USER_COOKIE_NAME: &str = "snitch-user";
 const PORT: u16 = 8081;
 
 use crate::api::notification_settings::get_notification_services;
+use crate::api::oauth::{oauth, oauth_done};
 use crate::service::notification_dispatcher::NotificationManager;
 use crate::service::notification_filter::NotificationFilter;
 use actix_web::http::header;
@@ -128,6 +129,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(session_middleware)
             .service(services)
             .service(services_token)
+            .service(oauth)
+            .service(oauth_done)
             .service(get_notification_services())
             .wrap(middleware::NormalizePath::trim())
             .wrap(middleware::Logger::default())

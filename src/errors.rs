@@ -31,6 +31,8 @@ impl ResponseError for APIError {
 pub enum APIInternalError {
     #[display(fmt = "UserAlreadyExists: {_0}")]
     UserAlreadyExists(User),
+    #[display(fmt = "No such user: {_0}")]
+    NoUserForEmail(String),
 }
 
 impl Error for APIInternalError {}

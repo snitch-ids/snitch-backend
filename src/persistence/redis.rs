@@ -1,4 +1,4 @@
-use crate::errors::APIInternalError;
+use crate::errors::{APIError, APIInternalError};
 use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
 use crate::persistence::{MessageKey, PersistMessage};
@@ -81,6 +81,10 @@ impl RedisDatabaseService {
 
     pub async fn add_user(&mut self, user: &User) {
         let user_id = &user.user_id;
+        if self.get_user_by_email(&user.email).await.is_ok() {
+            info!("not adding user as user already exists: {user}");
+            return;
+        }
         let _: () = self
             .connection
             .json_set(format!("user:{user_id}"), "$", &json!(user))
@@ -98,7 +102,7 @@ impl RedisDatabaseService {
     }
 
     pub async fn add_user_pending(&mut self, user: &User, nonce: &Nonce) -> Result<()> {
-        if self.get_user_by_email(&user.email).await.is_some() {
+        if self.get_user_by_email(&user.email).await.is_ok() {
             info!("not adding user pending as user already exists: {user}");
             return Err(Error::new(APIInternalError::UserAlreadyExists(
                 user.clone(),
@@ -137,29 +141,25 @@ impl RedisDatabaseService {
             .unwrap();
     }
 
-    pub async fn get_user_by_id(&mut self, user_id: &UserID) -> User {
+    pub async fn get_user_by_id(&mut self, user_id: &UserID) -> Result<User> {
         info!("get user by user_id {user_id}");
         let user_str: String = self
             .connection
             .json_get(format!("user:{user_id}"), ".")
-            .await
-            .unwrap();
-        serde_json::from_str(&user_str).unwrap()
+            .await?;
+        Ok(serde_json::from_str(&user_str)?)
     }
 
-    pub async fn get_user_by_email(&mut self, email: &str) -> Option<User> {
+    pub async fn get_user_by_email(&mut self, email: &str) -> Result<User> {
         info!("get user by email {email}");
-        if let Some(result) = self
-            .connection
-            .get(format!("user_email:{email}"))
-            .await
-            .unwrap()
-        {
-            info!("found: {:?}", result);
-            let user_id = String::from_redis_value(&result).unwrap();
-            return Some(self.get_user_by_id(&user_id.into()).await);
+        if let Some(result) = self.connection.get(format!("user_email:{email}")).await? {
+            info!("found user?: {:?}", result);
+            let user_id = String::from_redis_value(&result)?;
+            return self.get_user_by_id(&user_id.into()).await;
         };
-        None
+        Err(Error::new(APIInternalError::NoUserForEmail(
+            email.to_string(),
+        )))
     }
 
     pub(crate) async fn get_notification_settings(

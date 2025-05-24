@@ -1,17 +1,18 @@
+use crate::api::AppState;
+use crate::model::user::User;
 use actix_web::web::Redirect;
-use actix_web::{get, post, web, web::Form, web::Json, Responder};
-use log::{error, info, warn};
+use actix_web::{get, web, web::Json, Responder};
+use argonautica::utils::generate_random_base64_encoded_string;
+use log::{error, info};
 use openidconnect::core::{
     CoreAuthDisplay, CoreClaimName, CoreClaimType, CoreClient, CoreClientAuthMethod, CoreGrantType,
     CoreIdTokenClaims, CoreIdTokenVerifier, CoreJsonWebKey, CoreJweContentEncryptionAlgorithm,
-    CoreJweKeyManagementAlgorithm, CoreResponseMode, CoreResponseType, CoreRevocableToken,
-    CoreSubjectIdentifierType,
+    CoreJweKeyManagementAlgorithm, CoreResponseMode, CoreResponseType, CoreSubjectIdentifierType,
 };
 use openidconnect::reqwest;
 use openidconnect::{
     AdditionalProviderMetadata, AuthenticationFlow, AuthorizationCode, ClientId, ClientSecret,
-    CsrfToken, IssuerUrl, Nonce, OAuth2TokenResponse, ProviderMetadata, RedirectUrl, RevocationUrl,
-    Scope,
+    CsrfToken, IssuerUrl, Nonce, ProviderMetadata, RedirectUrl, RevocationUrl, Scope,
 };
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -48,9 +49,9 @@ struct OAuth2TokenResponseForm {
 
 #[get("/oauth_done")]
 pub async fn oauth_done(
+    state: web::Data<AppState>,
     oauth2token_response_form: web::Query<OAuth2TokenResponseForm>,
 ) -> Result<impl Responder, actix_web::Error> {
-    info!("{:?}", oauth2token_response_form);
     println!(
         "Google returned the following code:\n{}\n",
         oauth2token_response_form.code.secret()
@@ -117,7 +118,6 @@ pub async fn oauth_done(
     );
 
     let code = oauth2token_response_form.code.clone();
-    // Exchange the code with a token.
     let token_response = client
         .exchange_code(code)
         .unwrap_or_else(|err| {
@@ -130,12 +130,41 @@ pub async fn oauth_done(
             error!("Failed to contact token endpoint");
             unreachable!();
         });
-    warn!("{:?}", token_response);
-    Ok("token_response")
+
+    let nonce = state
+        .csrf_token
+        .lock()
+        .await
+        .remove(&serde_json::to_string(&oauth2token_response_form.state)?)
+        .unwrap();
+    let nonce = serde_json::from_str::<Nonce>(&nonce)?;
+
+    let id_token_verifier: CoreIdTokenVerifier = client.id_token_verifier();
+    let id_token_claims: &CoreIdTokenClaims = token_response
+        .extra_fields()
+        .id_token()
+        .expect("Server did not return an ID token")
+        .claims(&id_token_verifier, &nonce)
+        .unwrap_or_else(|err| {
+            error!("Failed to verify ID token");
+            unreachable!();
+        });
+
+    let email = id_token_claims
+        .email()
+        .map(|email| email.as_str())
+        .unwrap_or("<not provided>");
+    let user = User::new(
+        email.to_string(),
+        generate_random_base64_encoded_string(16).unwrap(),
+    );
+
+    let added_user = state.persist.lock().await.add_user(&user).await;
+    Ok(Json(added_user))
 }
 
 #[get("/oauth")]
-pub async fn oauth() -> Result<impl Responder, actix_web::Error> {
+pub async fn oauth(state: web::Data<AppState>) -> Result<impl Responder, actix_web::Error> {
     let google_client_id = ClientId::new(
         env::var("SNITCH_GOOGLE_CLIENT_ID")
             .expect("Missing the GOOGLE_CLIENT_ID environment variable."),
@@ -192,7 +221,7 @@ pub async fn oauth() -> Result<impl Responder, actix_web::Error> {
     );
 
     // Generate the authorization URL to which we'll redirect the user.
-    let (authorize_url, csrf_state, nonce) = client
+    let (authorize_url, csrf_token, nonce) = client
         .authorize_url(
             AuthenticationFlow::<CoreResponseType>::AuthorizationCode,
             CsrfToken::new_random,
@@ -203,5 +232,11 @@ pub async fn oauth() -> Result<impl Responder, actix_web::Error> {
         .add_scope(Scope::new("profile".to_string()))
         .url();
 
+    // add csrf token and nonce to state:
+    state.csrf_token.lock().await.insert(
+        serde_json::to_string(&csrf_token)?,
+        serde_json::to_string(&nonce).unwrap_or_default(),
+    );
+    info!("...... csrftoken: {:?}", state.csrf_token.lock().await);
     Ok(Redirect::to(authorize_url.to_string()))
 }

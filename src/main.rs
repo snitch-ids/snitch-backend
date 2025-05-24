@@ -80,6 +80,7 @@ async fn main() -> std::io::Result<()> {
             .unwrap_or_else(|_| panic!("failed to parse as url: {backend_url}")),
         frontend_url: Url::from_str(&frontend_url)
             .unwrap_or_else(|_| panic!("failed to parse as url: {frontend_url}")),
+        csrf_token: Default::default(),
     });
 
     let db_token_service = RedisDatabaseService::new()

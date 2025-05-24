@@ -43,7 +43,7 @@ pub async fn login(
     let mut users = state.persist.lock().await;
     let email = &login_request.email;
     debug!("login request for {}", email);
-    if let Some(user) = users.get_user_by_email(email).await {
+    if let Ok(user) = users.get_user_by_email(email).await {
         if valid_hash(&user.password_hash, &login_request.password) {
             Identity::login(&req.extensions(), user.user_id.to_string()).unwrap();
             return Ok(user.email);

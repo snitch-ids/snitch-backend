@@ -5,7 +5,7 @@ use crate::service::authentication::hash_password;
 use crate::{Deserialize, Serialize};
 use actix_identity::Identity;
 use actix_web::{delete, get, post, web, Responder};
-use log::info;
+use log::{error, info};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 struct UserResponse {
@@ -31,7 +31,10 @@ pub async fn get_user_by_id(
 ) -> Result<impl Responder, APIError> {
     let user_id: UserID = id.id().unwrap().into();
     let mut users = state.persist.lock().await;
-    let user = users.get_user_by_id(&user_id).await;
+    let user = users.get_user_by_id(&user_id).await.map_err(|e| {
+        error!("user not found by id: {}", user_id);
+        APIError::InternalServerError
+    })?;
     let response = UserResponse::from(user);
     Ok(web::Json(response))
 }
@@ -44,9 +47,7 @@ pub(crate) async fn add_user(
     info!("add user");
 
     let new_user = User::new(user.email.clone(), hash_password(&user.password));
-
-    let mut users = state.persist.lock().await;
-    let added_user = users.add_user(&new_user).await;
+    let added_user = state.persist.lock().await.add_user(&new_user).await;
     Ok(web::Json(added_user))
 }
 

@@ -1,7 +1,9 @@
 use crate::api::AppState;
+use crate::errors::APIError;
 use crate::model::user::User;
-use actix_web::web::Redirect;
-use actix_web::{get, web, web::Json, Responder};
+use actix_identity::Identity;
+use actix_web::web::{redirect, Redirect};
+use actix_web::{get, web, web::Json, HttpResponse, Responder};
 use argonautica::utils::generate_random_base64_encoded_string;
 use log::{error, info};
 use openidconnect::core::{
@@ -14,6 +16,7 @@ use openidconnect::{
     AdditionalProviderMetadata, AuthenticationFlow, AuthorizationCode, ClientId, ClientSecret,
     CsrfToken, IssuerUrl, Nonce, ProviderMetadata, RedirectUrl, RevocationUrl, Scope,
 };
+use reqwest::Request;
 use serde::{Deserialize, Serialize};
 use std::env;
 
@@ -49,6 +52,7 @@ struct OAuth2TokenResponseForm {
 
 #[get("/oauth_done")]
 pub async fn oauth_done(
+    req: actix_web::HttpRequest,
     state: web::Data<AppState>,
     oauth2token_response_form: web::Query<OAuth2TokenResponseForm>,
 ) -> Result<impl Responder, actix_web::Error> {
@@ -159,12 +163,32 @@ pub async fn oauth_done(
         generate_random_base64_encoded_string(16).unwrap(),
     );
 
-    let added_user = state.persist.lock().await.add_user(&user).await;
-    Ok(Json(added_user))
+    let user = state
+        .persist
+        .lock()
+        .await
+        .add_user(user)
+        .await
+        .map_err(|err| {
+            error!("Failed to add user: {}", err);
+            APIError::InternalServerError
+        })?;
+    let x = HttpResponse::Found()
+        // .cookie(cookie)
+        .append_header(("Location", "http://localhost:8080/"))
+        .finish();
+    info!("login user: {:?}", user);
+
+    // WIP: login causes crash:
+    // Identity::login(&x.extensions(), user.user_id.to_string())?;
+    Ok(x)
 }
 
 #[get("/oauth")]
-pub async fn oauth(state: web::Data<AppState>) -> Result<impl Responder, actix_web::Error> {
+pub async fn oauth(
+    req: actix_web::HttpRequest,
+    state: web::Data<AppState>,
+) -> Result<impl Responder, actix_web::Error> {
     let google_client_id = ClientId::new(
         env::var("SNITCH_GOOGLE_CLIENT_ID")
             .expect("Missing the GOOGLE_CLIENT_ID environment variable."),

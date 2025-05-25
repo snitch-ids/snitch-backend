@@ -1,9 +1,9 @@
 use crate::model::user::User;
 use actix_web::{error::ResponseError, HttpResponse};
 use derive_more::Display;
-use std::error::Error;
+use thiserror::Error;
 
-#[derive(Debug, Display)]
+#[derive(Error, Debug, Display)]
 pub enum APIError {
     #[display(fmt = "Internal Server Error")]
     InternalServerError,
@@ -27,12 +27,10 @@ impl ResponseError for APIError {
     }
 }
 
-#[derive(Debug, Display)]
+#[derive(Error, Debug, Display)]
 pub enum APIInternalError {
     #[display(fmt = "UserAlreadyExists: {_0}")]
     UserAlreadyExists(User),
     #[display(fmt = "No such user: {_0}")]
     NoUserForEmail(String),
 }
-
-impl Error for APIInternalError {}

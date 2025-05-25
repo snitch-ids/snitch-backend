@@ -2,10 +2,7 @@ use crate::errors::{APIError, APIInternalError};
 use crate::model::message::MessageBackend;
 use crate::model::user::{Nonce, User, UserID};
 use crate::persistence::{MessageKey, PersistMessage};
-use std::env;
-use std::result::Result::Ok as StdOk;
-
-use anyhow::{Error, Ok, Result};
+use anyhow::{Error as AnyhowError, Ok, Result as AnyhowResult};
 use chatterbox::dispatcher::email::Email;
 use chatterbox::dispatcher::slack::Slack;
 use chatterbox::dispatcher::telegram::Telegram;
@@ -15,7 +12,21 @@ use redis::JsonAsyncCommands;
 use redis::{aio, RedisResult};
 use redis::{AsyncCommands, FromRedisValue};
 use serde::{Deserialize, Serialize};
+use serde_json::error::Error as SerdeJsonError;
 use serde_json::json;
+use std::env;
+use std::result::Result::Ok as StdOk;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub(crate) enum PersistenceError {
+    #[error("Redis error: {0}")]
+    Redis(#[from] redis::RedisError),
+    #[error("Serde error: {0}")]
+    Serde(#[from] SerdeJsonError),
+    #[error("No user: {0}")]
+    NoUser(String),
+}
 
 #[derive(Debug)]
 pub struct RedisDatabaseService {
@@ -56,7 +67,7 @@ impl From<NotificationSettings> for Sender {
 }
 
 impl RedisDatabaseService {
-    pub async fn new() -> Result<Self> {
+    pub async fn new() -> AnyhowResult<Self> {
         let url = env::var("SNITCH_REDIS_URL").expect("SNITCH_REDIS_URL not defined");
         info!("connecting to redis {}", url);
 
@@ -79,18 +90,18 @@ impl RedisDatabaseService {
             .unwrap();
     }
 
-    pub async fn add_user(&mut self, user: &User) {
+    pub async fn add_user(&mut self, user: User) -> Result<User, PersistenceError> {
         let user_id = &user.user_id;
-        if self.get_user_by_email(&user.email).await.is_ok() {
+        if let StdOk(already_existing_user) = self.get_user_by_email(&user.email).await {
             info!("not adding user as user already exists: {user}");
-            return;
+            return StdOk(already_existing_user);
         }
         let _: () = self
             .connection
             .json_set(format!("user:{user_id}"), "$", &json!(user))
-            .await
-            .unwrap();
-        self.add_user_index(user).await;
+            .await?;
+        self.add_user_index(&user).await;
+        StdOk(user)
     }
 
     pub async fn delete_user(&mut self, user_id: &UserID) {
@@ -101,10 +112,10 @@ impl RedisDatabaseService {
             .unwrap();
     }
 
-    pub async fn add_user_pending(&mut self, user: &User, nonce: &Nonce) -> Result<()> {
+    pub async fn add_user_pending(&mut self, user: &User, nonce: &Nonce) -> AnyhowResult<()> {
         if self.get_user_by_email(&user.email).await.is_ok() {
             info!("not adding user pending as user already exists: {user}");
-            return Err(Error::new(APIInternalError::UserAlreadyExists(
+            return Err(AnyhowError::new(APIInternalError::UserAlreadyExists(
                 user.clone(),
             )));
         }
@@ -116,15 +127,14 @@ impl RedisDatabaseService {
         Ok(())
     }
 
-    pub async fn confirm_user_pending(&mut self, nonce: &Nonce) -> Result<()> {
+    pub async fn confirm_user_pending(&mut self, nonce: &Nonce) -> AnyhowResult<()> {
         let user = self.get_user_pending(nonce).await?;
-        self.add_user(&user).await;
+        self.add_user(user).await?;
         self.delete_user_pending(nonce).await;
-        info!("confirmed {:?}", user);
         Ok(())
     }
 
-    pub async fn get_user_pending(&mut self, nonce: &Nonce) -> Result<User> {
+    pub async fn get_user_pending(&mut self, nonce: &Nonce) -> AnyhowResult<User> {
         info!("get pending user. nonce: {nonce}");
         let user_str: String = self
             .connection
@@ -141,25 +151,24 @@ impl RedisDatabaseService {
             .unwrap();
     }
 
-    pub async fn get_user_by_id(&mut self, user_id: &UserID) -> Result<User> {
+    pub async fn get_user_by_id(&mut self, user_id: &UserID) -> Result<User, PersistenceError> {
         info!("get user by user_id {user_id}");
         let user_str: String = self
             .connection
             .json_get(format!("user:{user_id}"), ".")
             .await?;
-        Ok(serde_json::from_str(&user_str)?)
+        let user = serde_json::from_str(&user_str)?;
+        StdOk(user)
     }
 
-    pub async fn get_user_by_email(&mut self, email: &str) -> Result<User> {
+    pub async fn get_user_by_email(&mut self, email: &str) -> Result<User, PersistenceError> {
         info!("get user by email {email}");
         if let Some(result) = self.connection.get(format!("user_email:{email}")).await? {
             info!("found user?: {:?}", result);
             let user_id = String::from_redis_value(&result)?;
             return self.get_user_by_id(&user_id.into()).await;
         };
-        Err(Error::new(APIInternalError::NoUserForEmail(
-            email.to_string(),
-        )))
+        Err(PersistenceError::NoUser(email.to_string()))
     }
 
     pub(crate) async fn get_notification_settings(
@@ -227,7 +236,11 @@ fn load_demo_notification_settings() -> NotificationSettings {
 }
 
 impl PersistMessage for RedisDatabaseService {
-    async fn add_message(&mut self, key: &MessageKey, message: &MessageBackend) -> Result<()> {
+    async fn add_message(
+        &mut self,
+        key: &MessageKey,
+        message: &MessageBackend,
+    ) -> AnyhowResult<()> {
         let key = key.to_redis_key();
         let _: () = self.connection.rpush(&key, message).await?;
         info!("storing in database: {:?}... finished", message);
@@ -236,7 +249,7 @@ impl PersistMessage for RedisDatabaseService {
         Ok(())
     }
 
-    async fn find_messages(&mut self, key: &MessageKey) -> Result<Vec<MessageBackend>> {
+    async fn find_messages(&mut self, key: &MessageKey) -> AnyhowResult<Vec<MessageBackend>> {
         let responses: Vec<String> = self
             .connection
             .lrange(key.to_redis_key(), 0, MAX_MESSAGES)
@@ -248,7 +261,7 @@ impl PersistMessage for RedisDatabaseService {
         Ok(messages)
     }
 
-    async fn get_hostnames_of_user(&mut self, user_id: &UserID) -> Result<Vec<String>> {
+    async fn get_hostnames_of_user(&mut self, user_id: &UserID) -> AnyhowResult<Vec<String>> {
         let key = format!("messages:{user_id}:*");
         let keys: Vec<String> = self.connection.keys(key).await?;
         let hostnames = keys
@@ -266,7 +279,7 @@ async fn test_add_delete_user() {
     test_user.email = "x.x@x.x".to_string();
     let mut db = RedisDatabaseService::new().await.unwrap();
 
-    db.add_user(&test_user).await;
+    let test_user = db.add_user(test_user).await.unwrap();
     let _x = db.get_user_by_id(&test_user.user_id).await;
     let x = db.get_user_by_email(&test_user.email).await.unwrap();
     assert_eq!(x.email, test_user.email);
@@ -284,7 +297,7 @@ async fn test_add_messages() {
     test_user.email = "x.x@x.x".to_string();
     let mut db = RedisDatabaseService::new().await.unwrap();
     let mut test_message = MessageBackend::default();
-    db.add_user(&test_user).await;
+    let test_user = db.add_user(test_user).await.unwrap();
 
     let n_hostnames = 3;
     for i in 0..n_hostnames {

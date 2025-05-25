@@ -47,7 +47,13 @@ pub(crate) async fn add_user(
     info!("add user");
 
     let new_user = User::new(user.email.clone(), hash_password(&user.password));
-    let added_user = state.persist.lock().await.add_user(&new_user).await;
+    let added_user = state
+        .persist
+        .lock()
+        .await
+        .add_user(new_user)
+        .await
+        .map_err(|e| APIError::InternalServerError)?;
     Ok(web::Json(added_user))
 }
 

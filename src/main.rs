@@ -5,16 +5,14 @@ mod model;
 mod persistence;
 mod service;
 
+use crate::api::registration::register_reply;
 use crate::persistence::token::TokenState;
 use actix::Actor;
 use actix_cors::Cors;
 use actix_identity::IdentityMiddleware;
+use actix_session::storage::RedisSessionStore;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::cookie::{Key, SameSite};
-use std::env;
-use std::str::FromStr;
-
-use crate::api::registration::register_reply;
 use actix_web::web::Data;
 use actix_web::{middleware, services, web, App, HttpServer};
 use api::{
@@ -29,6 +27,8 @@ use log::error;
 use persistence::redis::RedisDatabaseService;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
+use std::env;
+use std::str::FromStr;
 
 use crate::api::messages::get_message_hostnames;
 use crate::api::token::delete_token;
@@ -62,9 +62,7 @@ async fn main() -> std::io::Result<()> {
     let backend_url =
         env::var("SNITCH_BACKEND_URL").expect("environment variable SNITCH_BACKEND_URL undefined");
     let frontend_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
-    let db_service = RedisDatabaseService::new()
-        .await
-        .expect("failed to create redis service");
+
     let notification_actor = service::notification_dispatcher::NotificationActor {
         notification_manager: NotificationManager::new(),
     };
@@ -89,6 +87,9 @@ async fn main() -> std::io::Result<()> {
 
     let state_token = Data::new(TokenState::new(db_token_service.connection));
     let secret_key = get_secret_key();
+    let redis_session_store = RedisSessionStore::new(RedisDatabaseService::get_redis_url())
+        .await
+        .expect("failed setting up session store");
 
     HttpServer::new(move || {
         let cookie_domain = std::env::var("SNITCH_COOKIE_DOMAIN")
@@ -113,9 +114,8 @@ async fn main() -> std::io::Result<()> {
             delete_user,
         ];
         let services_token = services![create_token, get_token, delete_token,];
-
         let session_middleware =
-            SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
+            SessionMiddleware::builder(redis_session_store.clone(), secret_key.clone())
                 .cookie_http_only(true)
                 .cookie_domain(cookie_domain)
                 .cookie_path("/".into())

@@ -68,16 +68,21 @@ impl From<NotificationSettings> for Sender {
 
 impl RedisDatabaseService {
     pub async fn new() -> AnyhowResult<Self> {
+        let url = Self::get_redis_url();
+        debug!("connecting to {url}");
+        let client = redis::Client::open(url)?;
+        let connection = client.get_multiplexed_async_connection().await?;
+        Ok(RedisDatabaseService { connection })
+    }
+
+    pub(crate) fn get_redis_url() -> String {
         let url = env::var("SNITCH_REDIS_URL").expect("SNITCH_REDIS_URL not defined");
         info!("connecting to redis {}", url);
 
         let password =
             env::var("SNITCH_REDIS_PASSWORD").expect("SNITCH_REDIS_PASSWORD not defined");
         let url = format!("redis://:{}@{}", password, url);
-        debug!("connecting to {url}");
-        let client = redis::Client::open(url)?;
-        let connection = client.get_multiplexed_async_connection().await?;
-        Ok(RedisDatabaseService { connection })
+        url
     }
 
     pub async fn add_user_index(&mut self, user: &User) {

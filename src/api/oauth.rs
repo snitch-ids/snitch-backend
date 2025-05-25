@@ -180,7 +180,7 @@ pub async fn oauth_done(
     info!("login user: {:?}", user);
 
     // WIP: login causes crash:
-    // Identity::login(&x.extensions(), user.user_id.to_string())?;
+    Identity::login(&x.extensions(), user.user_id.to_string())?;
     Ok(x)
 }
 

@@ -34,6 +34,8 @@ validator = { version = "0.15", features = ["derive"] }
 chatterbox = {path = "../chatterbox"}
 thiserror = "2.0"
 actix = "0.13.5"
+rdkafka = "0.37.0"
+clap = "4.5.39"
 
 [dependencies.uuid]
 version = "1.2.2"

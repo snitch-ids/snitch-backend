@@ -1,6 +1,7 @@
 mod api;
 mod errors;
 mod intentory;
+mod kafka;
 mod model;
 mod persistence;
 mod service;
@@ -42,6 +43,7 @@ const USER_COOKIE_NAME: &str = "snitch-user";
 const PORT: u16 = 8081;
 
 use crate::api::notification_settings::get_notification_services;
+use crate::service::kafka::{KafkaActor, KafkaManager};
 use crate::service::notification_dispatcher::NotificationManager;
 use crate::service::notification_filter::NotificationFilter;
 use actix_web::http::header;
@@ -68,6 +70,9 @@ async fn main() -> std::io::Result<()> {
         notification_manager: NotificationManager::new(),
     };
     let notification_addr = web::Data::new(notification_actor.start());
+
+    let kafka_actor = KafkaActor::new(KafkaManager::new());
+    let kafka_addr = Data::new(kafka_actor.start());
 
     let db_service = RedisDatabaseService::new()
         .await
@@ -133,6 +138,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .app_data(state.clone())
             .app_data(notification_addr.clone())
+            .app_data(kafka_addr.clone())
             .app_data(state_token.clone())
     })
     .bind(("0.0.0.0", PORT))?

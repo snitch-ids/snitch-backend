@@ -6,13 +6,19 @@ use serde::{Deserialize, Serialize};
 
 pub type MessageToken = String;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct MessageBackend {
-    pub hostname: String,
-    pub title: String,
-    pub body: String,
-    pub timestamp: DateTime<Utc>,
+pub mod greeter {
+    include!(concat!(env!("OUT_DIR"), "/greeter.rs"));
 }
+
+pub type MessageBackend = greeter::BackendMessage;
+
+// #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+// pub struct MessageBackend {
+//     pub hostname: String,
+//     pub title: String,
+//     pub body: String,
+//     pub timestamp: DateTime<Utc>,
+// }
 
 impl ToRedisArgs for MessageBackend {
     fn write_redis_args<W>(&self, out: &mut W)

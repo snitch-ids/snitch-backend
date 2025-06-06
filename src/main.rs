@@ -1,7 +1,6 @@
 mod api;
 mod errors;
 mod intentory;
-mod kafka;
 mod model;
 mod persistence;
 mod service;
@@ -137,8 +136,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::NormalizePath::trim())
             .wrap(middleware::Logger::default())
             .app_data(state.clone())
-            .app_data(notification_addr.clone())
             .app_data(kafka_addr.clone())
+            .app_data(notification_addr.clone())
             .app_data(state_token.clone())
     })
     .bind(("0.0.0.0", PORT))?

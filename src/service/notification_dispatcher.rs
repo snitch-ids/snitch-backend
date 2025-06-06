@@ -33,6 +33,7 @@ impl Handler<TryNotify> for NotificationActor {
     type Result = bool;
 
     fn handle(&mut self, msg: TryNotify, _: &mut Context<Self>) -> Self::Result {
+        println!("trying to notify: {:?}", msg.0);
         self.notification_manager.try_notify(msg.0)
     }
 }

@@ -7,10 +7,14 @@ use std::time::Duration;
 
 use log::info;
 
+use crate::model::message::{MessageBackend, MessageToken};
+use crate::model::user::UserID;
+use crate::persistence::MessageKey;
 use rdkafka::config::ClientConfig;
-use rdkafka::message::{Header, OwnedHeaders};
+use rdkafka::message::{Header, OwnedHeaders, ToBytes};
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::util::get_rdkafka_version;
+use serde_json::ser::State;
 
 async fn produce(brokers: &str, topic_name: &str) {
     // This loop is non blocking: all messages will be sent one after the other, without waiting
@@ -39,7 +43,6 @@ impl KafkaManager {
             // .set("sasl.mechanism", "SCRAM-SHA-256")
             // .set("sasl.username", "tool")
             // .set("sasl.password", "token")
-            .set("auto.create.topics.enable", "true")
             .set("group.id", "snitch-backend")
             .set("bootstrap.servers", "localhost:9092")
             .set("queue.buffering.max.ms", "1000")
@@ -52,13 +55,13 @@ impl KafkaManager {
 }
 
 impl KafkaManager {
-    pub(crate) async fn try_notify(&self, message: String) -> bool {
+    pub(crate) async fn try_notify(&self, message: TryNotify) -> bool {
         let delivery_status = self
             .producer
             .send(
                 FutureRecord::to("messages-backend")
-                    .payload(&message)
-                    .key("Key 0")
+                    .payload(&message.1)
+                    .key(&message.0)
                     .headers(OwnedHeaders::new().insert(Header {
                         key: "header_key",
                         value: Some("header_value"),
@@ -72,7 +75,7 @@ impl KafkaManager {
 
 #[derive(Message, Clone)]
 #[rtype(result = "Result<bool, ()>")]
-pub(crate) struct TryNotify(pub NotificationSettings);
+pub(crate) struct TryNotify(pub UserID, pub MessageBackend);
 
 pub(crate) struct KafkaActor {
     pub(crate) producer: KafkaManager,
@@ -92,13 +95,51 @@ impl Handler<TryNotify> for KafkaActor {
     type Result = ResponseActFuture<Self, Result<bool, ()>>;
 
     fn handle(&mut self, msg: TryNotify, _: &mut Context<Self>) -> Self::Result {
+        println!("trying to notify: {:?}", msg.0);
         let p = self.producer.clone();
         Box::pin(
             async move {
-                p.try_notify("hi".parse().unwrap()).await;
+                p.try_notify(msg).await;
                 Ok(true)
             }
             .into_actor(self),
         )
     }
+}
+
+struct KafkaDispatcher {
+    state: State,
+}
+
+impl KafkaDispatcher {
+    // async fn handle_message(&self, message: String) {
+    //
+    //     if self.state
+    //         .notification_filter
+    //         .lock()
+    //         .await
+    //         .notify_user(&user_id)
+    //         .await
+    //     {
+    //         let notification_settings = self.state
+    //             .persist
+    //             .lock()
+    //             .await
+    //             .get_notification_settings(&user_id)
+    //             .await;
+    //     }
+    //     let key = MessageKey {
+    //         user_id,
+    //         hostname: message.hostname.clone(),
+    //     };
+    //     self.state
+    //         .persist
+    //         .lock()
+    //         .await
+    //         .add_message(&key, &message)
+    //         .await
+    //         .expect("failed adding message");
+    //
+    // Ok("success".to_string())
+    // }
 }

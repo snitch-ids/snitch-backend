@@ -14,7 +14,7 @@ pub(crate) type Nonce = String;
 #[derive(
     Serialize, Deserialize, Debug, Display, FromStr, Hash, Ord, Eq, PartialOrd, PartialEq, Clone,
 )]
-pub struct UserID(String);
+pub struct UserID(pub String);
 
 impl ToBytes for UserID {
     fn to_bytes(&self) -> &[u8] {

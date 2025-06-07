@@ -42,7 +42,7 @@ const USER_COOKIE_NAME: &str = "snitch-user";
 const PORT: u16 = 8081;
 
 use crate::api::notification_settings::get_notification_services;
-use crate::service::kafka::{KafkaActor, KafkaManager};
+use crate::service::kafka::{KafkaActor, KafkaManager, KafkaPersistClient};
 use crate::service::notification_dispatcher::NotificationManager;
 use crate::service::notification_filter::NotificationFilter;
 use actix_web::http::header;
@@ -62,9 +62,7 @@ async fn main() -> std::io::Result<()> {
     let backend_url =
         env::var("SNITCH_BACKEND_URL").expect("environment variable SNITCH_BACKEND_URL undefined");
     let frontend_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
-    let db_service = RedisDatabaseService::new()
-        .await
-        .expect("failed to create redis service");
+
     let notification_actor = service::notification_dispatcher::NotificationActor {
         notification_manager: NotificationManager::new(),
     };
@@ -84,6 +82,8 @@ async fn main() -> std::io::Result<()> {
         frontend_url: Url::from_str(&frontend_url)
             .unwrap_or_else(|_| panic!("failed to parse as url: {frontend_url}")),
     });
+
+    KafkaPersistClient::new(state.clone());
 
     let db_token_service = RedisDatabaseService::new()
         .await

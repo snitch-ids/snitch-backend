@@ -1,4 +1,3 @@
-use crate::service::kafka::TryNotify;
 use chatterbox::message::{Message, Notification};
 use chrono::{DateTime, Utc};
 use rdkafka::message::ToBytes;
@@ -16,6 +15,12 @@ pub struct MessageBackend {
     pub timestamp: DateTime<Utc>,
     #[serde(skip)]
     cached_bytes: OnceLock<Vec<u8>>,
+}
+
+impl MessageBackend {
+    pub(crate) fn from_bytes(bytes: &[u8]) -> Self {
+        serde_json::from_slice(bytes).expect("failed parsing from bytes")
+    }
 }
 
 impl ToBytes for MessageBackend {

@@ -1,20 +1,27 @@
 use crate::persistence::redis::NotificationSettings;
 use actix::ActorFutureExt;
-use actix::{Actor, Context, Handler, Message, ResponseActFuture, WrapFuture};
+use actix::{Actor, Context, Handler, Message as ActixMessage, ResponseActFuture, WrapFuture};
 use chatterbox::message::Dispatcher;
+use rdkafka::Message;
 
-use std::time::Duration;
-
-use log::info;
-
+use crate::api::AppState;
 use crate::model::message::{MessageBackend, MessageToken};
 use crate::model::user::UserID;
-use crate::persistence::MessageKey;
-use rdkafka::config::ClientConfig;
-use rdkafka::message::{Header, OwnedHeaders, ToBytes};
+use crate::persistence::{MessageKey, PersistMessage};
+use actix_web::web::Data;
+use log::{info, warn};
+use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
+use rdkafka::consumer::{
+    BaseConsumer, CommitMode, Consumer, ConsumerContext, Rebalance, StreamConsumer,
+};
+use rdkafka::error::KafkaResult;
+use rdkafka::message::{Header, Headers, OwnedHeaders, ToBytes};
 use rdkafka::producer::{FutureProducer, FutureRecord};
 use rdkafka::util::get_rdkafka_version;
+use rdkafka::{ClientContext, TopicPartitionList};
 use serde_json::ser::State;
+use std::time::Duration;
+use tokio::task::JoinHandle;
 
 async fn produce(brokers: &str, topic_name: &str) {
     // This loop is non blocking: all messages will be sent one after the other, without waiting
@@ -73,7 +80,7 @@ impl KafkaManager {
     }
 }
 
-#[derive(Message, Clone)]
+#[derive(ActixMessage, Clone)]
 #[rtype(result = "Result<bool, ()>")]
 pub(crate) struct TryNotify(pub UserID, pub MessageBackend);
 
@@ -107,39 +114,127 @@ impl Handler<TryNotify> for KafkaActor {
     }
 }
 
-struct KafkaDispatcher {
-    state: State,
+pub(crate) struct KafkaPersistClient {
+    handle: JoinHandle<()>,
 }
 
-impl KafkaDispatcher {
-    // async fn handle_message(&self, message: String) {
-    //
-    //     if self.state
-    //         .notification_filter
-    //         .lock()
-    //         .await
-    //         .notify_user(&user_id)
-    //         .await
-    //     {
-    //         let notification_settings = self.state
-    //             .persist
-    //             .lock()
-    //             .await
-    //             .get_notification_settings(&user_id)
-    //             .await;
-    //     }
-    //     let key = MessageKey {
-    //         user_id,
-    //         hostname: message.hostname.clone(),
-    //     };
-    //     self.state
-    //         .persist
-    //         .lock()
-    //         .await
-    //         .add_message(&key, &message)
-    //         .await
-    //         .expect("failed adding message");
-    //
-    // Ok("success".to_string())
-    // }
+impl KafkaPersistClient {
+    pub(crate) fn new(state: Data<AppState>) -> Self {
+        let handle = tokio::task::spawn(async move {
+            consume_and_store(
+                "localhost:9092",
+                "snitch-backend",
+                &["messages-backend"],
+                None,
+                state,
+            )
+            .await;
+        });
+        KafkaPersistClient { handle }
+    }
+}
+
+struct CustomContext;
+
+impl ClientContext for CustomContext {}
+
+impl ConsumerContext for CustomContext {
+    fn pre_rebalance(&self, _: &BaseConsumer<Self>, rebalance: &Rebalance) {
+        info!("Pre rebalance {:?}", rebalance);
+    }
+
+    fn post_rebalance(&self, _: &BaseConsumer<Self>, rebalance: &Rebalance) {
+        info!("Post rebalance {:?}", rebalance);
+    }
+
+    fn commit_callback(&self, result: KafkaResult<()>, _offsets: &TopicPartitionList) {
+        info!("Committing offsets: {:?}", result);
+    }
+}
+
+// A type alias with your custom consumer can be created for convenience.
+type LoggingConsumer = StreamConsumer<CustomContext>;
+
+async fn consume_and_store(
+    brokers: &str,
+    group_id: &str,
+    topics: &[&str],
+    assignor: Option<&String>,
+    state: Data<AppState>,
+) {
+    let context = CustomContext;
+
+    let mut config = ClientConfig::new();
+
+    config
+        .set("group.id", group_id)
+        .set("bootstrap.servers", brokers)
+        .set("enable.partition.eof", "false")
+        .set("session.timeout.ms", "6000")
+        .set("enable.auto.commit", "true")
+        //.set("statistics.interval.ms", "30000")
+        //.set("auto.offset.reset", "smallest")
+        .set_log_level(RDKafkaLogLevel::Debug);
+
+    if let Some(assignor) = assignor {
+        config
+            .set("group.remote.assignor", assignor)
+            .set("group.protocol", "consumer")
+            .remove("session.timeout.ms");
+    }
+
+    let consumer: LoggingConsumer = config
+        .create_with_context(context)
+        .expect("Consumer creation failed");
+
+    consumer
+        .subscribe(topics)
+        .expect("Can't subscribe to specified topics");
+
+    loop {
+        match consumer.recv().await {
+            Err(e) => warn!("Kafka error: {}", e),
+            Ok(m) => {
+                let payload = match m.payload_view::<[u8]>() {
+                    None => None,
+                    Some(Ok(s)) => Some(MessageBackend::from_bytes(s)),
+                    Some(Err(e)) => {
+                        warn!("Error while deserializing message payload: {:?}", e);
+                        None
+                    }
+                };
+                let message = payload.unwrap();
+
+                let user_id = m.key().unwrap();
+                let user_id = UserID(String::from_utf8(user_id.to_vec()).unwrap());
+                info!(
+                    "key: '{:?}', message: '{:?}', topic: {}, partition: {}, offset: {}, timestamp: {:?}",
+                    user_id,
+                    message,
+                    m.topic(),
+                    m.partition(),
+                    m.offset(),
+                    m.timestamp()
+                );
+                if let Some(headers) = m.headers() {
+                    for header in headers.iter() {
+                        info!("  Header {:#?}: {:?}", header.key, header.value);
+                    }
+                }
+                consumer.commit_message(&m, CommitMode::Async).unwrap();
+                let message_key = MessageKey {
+                    user_id,
+                    hostname: message.hostname.clone(),
+                };
+
+                state
+                    .persist
+                    .lock()
+                    .await
+                    .add_message(&message_key, &message)
+                    .await
+                    .unwrap();
+            }
+        };
+    }
 }

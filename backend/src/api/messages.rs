@@ -11,6 +11,7 @@ use crate::model::user::UserID;
 use crate::TokenState;
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 
+use crate::service::kafka::{KafkaActor, TryNotify as KafkaNotify};
 use crate::service::notification_dispatcher::{NotificationActor, TryNotify};
 use log::info;
 use serde::Deserialize;
@@ -31,8 +32,7 @@ pub(crate) async fn add_message(
     auth: BearerAuth,
     message: web::Json<MessageBackend>,
     token_state: web::Data<TokenState>,
-    state: web::Data<AppState>,
-    notification_addr: web::Data<Addr<NotificationActor>>,
+    kafka_add: web::Data<Addr<KafkaActor>>,
 ) -> Result<impl Responder, APIError> {
     let mut token_store = token_state.token.lock().await;
     let token: MessageToken = auth.token().trim().to_string();
@@ -42,32 +42,7 @@ pub(crate) async fn add_message(
             return Err(APIError::Unauthorized);
         }
         Some(user_id) => {
-            if state
-                .notification_filter
-                .lock()
-                .await
-                .notify_user(&user_id)
-                .await
-            {
-                let notification_settings = state
-                    .persist
-                    .lock()
-                    .await
-                    .get_notification_settings(&user_id)
-                    .await;
-                notification_addr.do_send(TryNotify(notification_settings));
-            }
-            let key = MessageKey {
-                user_id,
-                hostname: message.hostname.clone(),
-            };
-            state
-                .persist
-                .lock()
-                .await
-                .add_message(&key, &message)
-                .await
-                .expect("failed adding message");
+            kafka_add.do_send(KafkaNotify(user_id, message.0));
         }
     }
 

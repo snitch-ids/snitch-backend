@@ -13,7 +13,7 @@ use actix_session::{storage::CookieSessionStore, SessionMiddleware};
 use actix_web::cookie::{Key, SameSite};
 use std::env;
 use std::str::FromStr;
-use actix_session::config::{PersistentSession, SessionLifecycle};
+
 use crate::api::registration::register_reply;
 use actix_web::web::Data;
 use actix_web::{middleware, services, web, App, HttpServer};
@@ -42,6 +42,7 @@ const USER_COOKIE_NAME: &str = "snitch-user";
 const PORT: u16 = 8081;
 
 use crate::api::notification_settings::get_notification_services;
+use crate::service::kafka::{KafkaActor, KafkaManager, KafkaPersistClient};
 use crate::service::notification_dispatcher::NotificationManager;
 use crate::service::notification_filter::NotificationFilter;
 use actix_web::http::header;
@@ -61,13 +62,14 @@ async fn main() -> std::io::Result<()> {
     let backend_url =
         env::var("SNITCH_BACKEND_URL").expect("environment variable SNITCH_BACKEND_URL undefined");
     let frontend_url = env::var("SNITCH_FRONTEND_URL").expect("SNITCH_FRONTEND_URL undefined");
-    let db_service = RedisDatabaseService::new()
-        .await
-        .expect("failed to create redis service");
+
     let notification_actor = service::notification_dispatcher::NotificationActor {
         notification_manager: NotificationManager::new(),
     };
     let notification_addr = web::Data::new(notification_actor.start());
+
+    let kafka_actor = KafkaActor::new(KafkaManager::new());
+    let kafka_addr = Data::new(kafka_actor.start());
 
     let db_service = RedisDatabaseService::new()
         .await
@@ -80,6 +82,8 @@ async fn main() -> std::io::Result<()> {
         frontend_url: Url::from_str(&frontend_url)
             .unwrap_or_else(|_| panic!("failed to parse as url: {frontend_url}")),
     });
+
+    KafkaPersistClient::new(state.clone());
 
     let db_token_service = RedisDatabaseService::new()
         .await
@@ -115,7 +119,6 @@ async fn main() -> std::io::Result<()> {
         let session_middleware =
             SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
                 .cookie_http_only(true)
-                .session_lifecycle(SessionLifecycle::PersistentSession(PersistentSession::default()))
                 .cookie_domain(cookie_domain)
                 .cookie_path("/".into())
                 .cookie_name(USER_COOKIE_NAME.to_string())
@@ -133,6 +136,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::NormalizePath::trim())
             .wrap(middleware::Logger::default())
             .app_data(state.clone())
+            .app_data(kafka_addr.clone())
             .app_data(notification_addr.clone())
             .app_data(state_token.clone())
     })

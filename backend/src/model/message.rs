@@ -1,8 +1,9 @@
 use chatterbox::message::{Message, Notification};
 use chrono::{DateTime, Utc};
-
+use rdkafka::message::ToBytes;
 use redis::{RedisWrite, ToRedisArgs};
 use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
 
 pub type MessageToken = String;
 
@@ -12,6 +13,24 @@ pub struct MessageBackend {
     pub title: String,
     pub body: String,
     pub timestamp: DateTime<Utc>,
+    #[serde(skip)]
+    cached_bytes: OnceLock<Vec<u8>>,
+}
+
+impl MessageBackend {
+    pub(crate) fn from_bytes(bytes: &[u8]) -> Self {
+        serde_json::from_slice(bytes).expect("failed parsing from bytes")
+    }
+}
+
+impl ToBytes for MessageBackend {
+    fn to_bytes(&self) -> &[u8] {
+        let as_bytes = self.cached_bytes.get_or_init(|| {
+            let as_string = serde_json::to_string(self).expect("failed parsing to string");
+            as_string.as_bytes().to_vec()
+        });
+        as_bytes
+    }
 }
 
 impl ToRedisArgs for MessageBackend {

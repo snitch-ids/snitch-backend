@@ -1,10 +1,10 @@
 use derive_more::{Display, FromStr};
 
-use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
-
 use crate::api::registration::RegistrationRequest;
 use crate::service::authentication::hash_password;
+use rdkafka::message::ToBytes;
+use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
 use uuid;
 use uuid::Uuid;
@@ -14,7 +14,13 @@ pub(crate) type Nonce = String;
 #[derive(
     Serialize, Deserialize, Debug, Display, FromStr, Hash, Ord, Eq, PartialOrd, PartialEq, Clone,
 )]
-pub struct UserID(String);
+pub struct UserID(pub String);
+
+impl ToBytes for UserID {
+    fn to_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
 
 impl UserID {
     pub fn new() -> Self {

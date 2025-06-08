@@ -230,7 +230,7 @@ impl PersistMessage for RedisDatabaseService {
     async fn add_message(&mut self, key: &MessageKey, message: &MessageBackend) -> Result<()> {
         let key = key.to_redis_key();
         let _: () = self.connection.rpush(&key, message).await?;
-        info!("storing in database: {:?}... finished", message);
+        // info!("storing in database: {:?}... finished", message);
         self.connection.expire(&key, TTL::Message as i64).await?;
 
         Ok(())
@@ -241,6 +241,7 @@ impl PersistMessage for RedisDatabaseService {
             .connection
             .lrange(key.to_redis_key(), 0, MAX_MESSAGES)
             .await?;
+
         let messages = responses
             .iter()
             .map(|response| serde_json::from_str(response).unwrap())

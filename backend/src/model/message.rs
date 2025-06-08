@@ -1,36 +1,80 @@
-use chatterbox::message::{Message, Notification};
+use actix_web::cookie::time::macros::time;
+use chatterbox::message::{Message as ChatterboxMessage, Notification};
 use chrono::{DateTime, Utc};
+use prost::{Enumeration, Message};
 use rdkafka::message::ToBytes;
-use redis::{RedisWrite, ToRedisArgs};
-use serde::{Deserialize, Serialize};
+use redis::{FromRedisValue, RedisResult, RedisWrite, ToRedisArgs, Value};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::io::Cursor;
+use std::str::FromStr;
 use std::sync::OnceLock;
+use std::time::SystemTime;
 
 pub type MessageToken = String;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct MessageBackend {
+pub mod proto {
+    include!(concat!(env!("OUT_DIR"), "/greeter.rs"));
+}
+
+#[derive(Serialize, Deserialize, Default, Debug)]
+pub(crate) struct MessageBackend {
     pub hostname: String,
     pub title: String,
     pub body: String,
-    pub timestamp: DateTime<Utc>,
-    #[serde(skip)]
-    cached_bytes: OnceLock<Vec<u8>>,
+    pub timestamp: Option<DateTime<Utc>>,
 }
 
-impl MessageBackend {
-    pub(crate) fn from_bytes(bytes: &[u8]) -> Self {
-        serde_json::from_slice(bytes).expect("failed parsing from bytes")
+impl From<MessageBackend> for ProtoMessageBackend {
+    fn from(value: MessageBackend) -> Self {
+        let timestamp = value.timestamp.unwrap();
+        let s: SystemTime = timestamp.into();
+        let timestamp = prost_types::Timestamp::from(s);
+        Self {
+            hostname: value.hostname,
+            title: value.title,
+            body: value.body,
+            timestamp: Some(timestamp),
+        }
     }
 }
 
-impl ToBytes for MessageBackend {
-    fn to_bytes(&self) -> &[u8] {
-        let as_bytes = self.cached_bytes.get_or_init(|| {
-            let as_string = serde_json::to_string(self).expect("failed parsing to string");
-            as_string.as_bytes().to_vec()
-        });
-        as_bytes
+impl From<ProtoMessageBackend> for MessageBackend {
+    fn from(value: ProtoMessageBackend) -> Self {
+        let timestamp = value.timestamp.unwrap();
+        let s = chrono::DateTime::<Utc>::from_timestamp(timestamp.seconds, timestamp.nanos as u32);
+
+        Self {
+            hostname: value.hostname,
+            title: value.title,
+            body: value.body,
+            timestamp: s,
+        }
     }
+}
+
+pub type ProtoMessageBackend = proto::BackendMessage;
+
+impl From<&String> for ProtoMessageBackend {
+    fn from(s: &String) -> Self {
+        ProtoMessageBackend::decode(&mut Cursor::new(s)).unwrap()
+    }
+}
+
+impl Serialize for ProtoMessageBackend {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let as_string = serde_json::to_string(self).expect("failed parsing to string");
+        serializer.serialize_str(&as_string)
+    }
+}
+
+pub fn serialize_message(message: &ProtoMessageBackend) -> Vec<u8> {
+    let mut buf = Vec::new();
+    buf.reserve(message.encoded_len());
+    message.encode(&mut buf).unwrap();
+    buf
 }
 
 impl ToRedisArgs for MessageBackend {
@@ -44,9 +88,9 @@ impl ToRedisArgs for MessageBackend {
 }
 
 impl Notification for MessageBackend {
-    fn message(&self) -> Message {
+    fn message(&self) -> ChatterboxMessage {
         let body = self.body.clone() + "\n\n" + &self.hostname;
-        Message {
+        ChatterboxMessage {
             title: self.title.clone(),
             body,
         }

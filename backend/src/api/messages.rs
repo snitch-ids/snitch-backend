@@ -1,5 +1,5 @@
 use crate::api::AppState;
-use crate::model::message::{MessageBackend, MessageToken};
+use crate::model::message::{MessageBackend, MessageToken, ProtoMessageBackend};
 use crate::persistence::{MessageKey, PersistMessage};
 use actix::Addr;
 use actix_identity::Identity;
@@ -13,7 +13,7 @@ use actix_web_httpauth::extractors::bearer::BearerAuth;
 
 use crate::service::kafka::{KafkaActor, TryNotify as KafkaNotify};
 use crate::service::notification_dispatcher::{NotificationActor, TryNotify};
-use log::info;
+use log::{error, info};
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -36,13 +36,14 @@ pub(crate) async fn add_message(
 ) -> Result<impl Responder, APIError> {
     let mut token_store = token_state.token.lock().await;
     let token: MessageToken = auth.token().trim().to_string();
+    let message: ProtoMessageBackend = message.into_inner().into();
     match token_store.get_user_id_of_token(&token).await {
         None => {
             info!("no user id of token {token}");
             return Err(APIError::Unauthorized);
         }
         Some(user_id) => {
-            kafka_add.do_send(KafkaNotify(user_id, message.0));
+            kafka_add.do_send(KafkaNotify(user_id, message));
         }
     }
 
@@ -76,10 +77,10 @@ pub(crate) async fn get_messages_by_hostname(
     let user_id: UserID = identity.id().unwrap().into();
     let key = MessageKey { user_id, hostname };
     let mut messages_state = state.persist.lock().await;
-    let messages: Vec<MessageBackend> = messages_state
-        .find_messages(&key)
-        .await
-        .map_err(|_| APIError::InternalServerError)?;
+    let messages: Vec<MessageBackend> = messages_state.find_messages(&key).await.map_err(|e| {
+        error!("{}", e);
+        APIError::InternalServerError
+    })?;
     info!("returning {} objects ", messages.len());
     Ok(web::Json(messages))
 }

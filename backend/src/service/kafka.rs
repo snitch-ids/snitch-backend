@@ -3,13 +3,15 @@ use actix::ActorFutureExt;
 use actix::{Actor, Context, Handler, Message as ActixMessage, ResponseActFuture, WrapFuture};
 use chatterbox::message::Dispatcher;
 use rdkafka::Message;
+use std::io::Cursor;
 
 use crate::api::AppState;
-use crate::model::message::{MessageBackend, MessageToken};
+use crate::model::message::{serialize_message, MessageBackend, MessageToken, ProtoMessageBackend};
 use crate::model::user::UserID;
 use crate::persistence::{MessageKey, PersistMessage};
 use actix_web::web::Data;
 use log::{info, warn};
+use prost::Message as _;
 use rdkafka::config::{ClientConfig, RDKafkaLogLevel};
 use rdkafka::consumer::{
     BaseConsumer, CommitMode, Consumer, ConsumerContext, Rebalance, StreamConsumer,
@@ -63,11 +65,12 @@ impl KafkaManager {
 
 impl KafkaManager {
     pub(crate) async fn try_notify(&self, message: TryNotify) -> bool {
+        let payload = serialize_message(&message.1);
         let delivery_status = self
             .producer
             .send(
                 FutureRecord::to("messages-backend")
-                    .payload(&message.1)
+                    .payload(&payload)
                     .key(&message.0)
                     .headers(OwnedHeaders::new().insert(Header {
                         key: "header_key",
@@ -82,7 +85,7 @@ impl KafkaManager {
 
 #[derive(ActixMessage, Clone)]
 #[rtype(result = "Result<bool, ()>")]
-pub(crate) struct TryNotify(pub UserID, pub MessageBackend);
+pub(crate) struct TryNotify(pub UserID, pub ProtoMessageBackend);
 
 pub(crate) struct KafkaActor {
     pub(crate) producer: KafkaManager,
@@ -197,7 +200,10 @@ async fn consume_and_store(
             Ok(m) => {
                 let payload = match m.payload_view::<[u8]>() {
                     None => None,
-                    Some(Ok(s)) => Some(MessageBackend::from_bytes(s)),
+                    Some(Ok(s)) => {
+                        let message = ProtoMessageBackend::decode(&mut Cursor::new(s)).unwrap();
+                        Some(message)
+                    }
                     Some(Err(e)) => {
                         warn!("Error while deserializing message payload: {:?}", e);
                         None
@@ -226,7 +232,7 @@ async fn consume_and_store(
                     user_id,
                     hostname: message.hostname.clone(),
                 };
-
+                let message = MessageBackend::from(message);
                 state
                     .persist
                     .lock()

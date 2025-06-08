@@ -34,6 +34,8 @@ chatterbox = "2.0"
 thiserror = "2.0"
 actix = "0.13.5"
 rdkafka = "0.37.0"
+prost = { version = "0.13.5", features = ["derive"] }
+prost-types = "0.13.5"
 
 [dependencies.uuid]
 version = "1.2.2"
@@ -47,4 +49,4 @@ features = [
 needs_env_var = "1.1"
 
 [build-dependencies]
-prost-build = { version = "0.6" }
+prost-build = { version = "0.13.5" }

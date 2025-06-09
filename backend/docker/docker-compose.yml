@@ -24,6 +24,7 @@ services:
       - "9092:9092"
     environment:
       # Configure listeners for both docker and host communication
+      BROKER_ID_COMMAND: 'hostname | cut -b 20'
       KAFKA_LISTENERS: CONTROLLER://localhost:9091,HOST://0.0.0.0:9092,DOCKER://0.0.0.0:9093
       KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT,HOST:PLAINTEXT
@@ -40,6 +41,20 @@ services:
       # Required for a single node cluster
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/kafka_server_jaas.conf
+      # SASL Configuration for username/password authentication
+      KAFKA_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL: PLAIN
+
+      # ADDED: Configure SASL for specific listeners
+      KAFKA_LISTENER_NAME_DOCKER_SASL_ENABLED_MECHANISMS: PLAIN
+      KAFKA_LISTENER_NAME_HOST_SASL_ENABLED_MECHANISMS: PLAIN
+
+    volumes:
+      - ./kafka_server_jaas.conf:/etc/kafka/kafka_server_jaas.conf
+#      - ./server.properties:/etc/kafka/docker/server.properties
+#      - kafka-logs:/tmp/kraft-combined-logs
 
   kafka-ui:
     image: kafbat/kafka-ui:main
@@ -51,3 +66,6 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9093
     depends_on:
       - kafka
+
+volumes:
+  kafka-logs:

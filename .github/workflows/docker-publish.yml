@@ -69,7 +69,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v6
         with:
-          context: backend
+          file: backend/Dockerfile
           platforms: linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
